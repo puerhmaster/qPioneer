@@ -20,12 +20,12 @@ import streamlit as st
 
 @st.cache_resource
 def init_drive():
-    cfg = json.loads(st.secrets["gdrive_oauth"]["client_config"])
+    # Initialize PyDrive2 using a service account from secrets
+    svc_cfg = json.loads(st.secrets["gdrive_service_account"])
     gauth = GoogleAuth()
-    gauth.settings["client_config"] = cfg
-    gauth.settings["client_config_backend"] = "settings"
-    gauth.settings["get_refresh_token"] = True
-    gauth.LocalWebserverAuth()
+    gauth.settings["service_config"] = svc_cfg
+    gauth.settings["service_config_backend"] = "settings"
+    gauth.ServiceAuth()
     return GoogleDrive(gauth)
 
 drive = init_drive()
