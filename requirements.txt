@@ -62,3 +62,6 @@ urllib3==2.4.0
 webencodings==0.5.1
 xyzservices==2025.4.0
 zopfli==0.2.3.post1
+pydrive2==1.11.1
+google-auth==2.25.0
+oauth2client==4.1.3
