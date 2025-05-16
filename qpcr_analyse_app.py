@@ -14,9 +14,15 @@ from scipy import stats
 from fpdf import FPDF
 import base64
 
-
 # --- GitHub integration for saving reports ---
-from github import Github
+try:
+    from github import Github
+except ModuleNotFoundError:
+    st.error(
+        "⚠️ Не найдена библиотека PyGithub. "
+        "Добавьте `PyGithub` в requirements.txt и перезапустите приложение."
+    )
+    st.stop()
 
 st.set_page_config(layout="wide")
 
