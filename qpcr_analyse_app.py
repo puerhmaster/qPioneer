@@ -20,10 +20,13 @@ import streamlit as st
 
 @st.cache_resource
 def init_drive():
+    # Загружаем JSON-конфиг из secrets.toml
+    cfg = json.loads(st.secrets["gdrive_oauth"]["client_config"])
     gauth = GoogleAuth()
-    # Загружаем ваш credentials.json
-    gauth.LoadClientConfigFile("credentials.json")
-    # При первом запуске откроется окно входа в Google
+    gauth.settings["client_config"] = cfg
+    gauth.settings["client_config_backend"] = "service"
+    gauth.settings["get_refresh_token"] = True
+    # Запуск OAuth flow
     gauth.LocalWebserverAuth()
     return GoogleDrive(gauth)
 
