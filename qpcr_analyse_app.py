@@ -14,6 +14,24 @@ from scipy import stats
 from fpdf import FPDF
 import base64
 
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
+import streamlit as st
+
+@st.cache_resource
+def init_drive():
+    gauth = GoogleAuth()
+    # Загружаем ваш credentials.json
+    gauth.LoadClientConfigFile("credentials.json")
+    # При первом запуске откроется окно входа в Google
+    gauth.LocalWebserverAuth()
+    return GoogleDrive(gauth)
+
+drive = init_drive()
+
+# Задайте ID папки в вашем Google Drive для хранения
+FOLDER_ID = "1fs3_8TS2gCvIWg4LBWc445JAyB6xluq6"
+
 # Set Streamlit page config after all imports
 st.set_page_config(layout="wide")
 # --- Выбор языка / Language selector ---
@@ -881,6 +899,15 @@ if st.sidebar.button("Generate Full Report"):
         file_name="qpcr_full_report.pdf",
         mime="application/pdf"
     )
+    # Upload PDF report to Google Drive
+    pdf_drive_file = drive.CreateFile({
+        "title": "qpcr_full_report.pdf",
+        "parents": [{"id": FOLDER_ID}],
+        "mimeType": "application/pdf"
+    })
+    pdf_drive_file.ContentBinary = buf_pdf.getvalue()
+    pdf_drive_file.Upload()
+    st.sidebar.success("PDF report uploaded to Google Drive")
 
     # Finalize HTML report
     full_html = "<html><head><title>qPCR Report</title></head><body>" + "".join(full_html_parts) + "</body></html>"
@@ -890,3 +917,12 @@ if st.sidebar.button("Generate Full Report"):
         file_name="qpcr_full_report.html",
         mime="text/html"
     )
+    # Upload HTML report to Google Drive
+    html_drive_file = drive.CreateFile({
+        "title": "qpcr_full_report.html",
+        "parents": [{"id": FOLDER_ID}],
+        "mimeType": "text/html"
+    })
+    html_drive_file.SetContentString(full_html)
+    html_drive_file.Upload()
+    st.sidebar.success("HTML report uploaded to Google Drive")
