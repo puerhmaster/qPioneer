@@ -59,7 +59,6 @@ tornado==6.4.2
 typing_extensions==4.13.2
 tzdata==2025.2
 urllib3==2.4.0
-weasyprint==65.1
 webencodings==0.5.1
 xyzservices==2025.4.0
 zopfli==0.2.3.post1
