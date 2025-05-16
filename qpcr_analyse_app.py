@@ -769,6 +769,11 @@ if "merged_t" in st.session_state:
 
 
 # -------------------- Full Report Generation --------------------
+import tempfile
+import matplotlib
+# Ensure plotly can write images
+import plotly.io as pio
+
 st.sidebar.markdown("## 📑 Full Report")
 if st.sidebar.button("Generate Full Report"):
     # Create PDF with FPDF
@@ -786,7 +791,6 @@ if st.sidebar.button("Generate Full Report"):
 
     # Expression table
     merged_t = st.session_state.get("merged_t", pd.DataFrame())
-    # Ensure PDF-only column names are Latin-1 safe
     if "ΔCt" in merged_t.columns:
         merged_t = merged_t.rename(columns={"ΔCt": "dCt"})
     pdf.set_font("Courier", size=10)
@@ -796,31 +800,81 @@ if st.sidebar.button("Generate Full Report"):
     for _, row in merged_t.iterrows():
         line = "  ".join(str(row[c])[:10].ljust(10) for c in cols)
         pdf.cell(0, 6, line, ln=True)
+    pdf.ln(4)
 
-    # Save PDF to buffer properly using output(dest='S')
+    # Generate and embed plots
+    for g in merged_t["gene"].unique():
+        sub = merged_t[merged_t["gene"] == g]
+        # boxplot or barplot based on last selected type
+        fig_bar = None
+        if st.session_state.get("plot_type") == texts["barplot_header"]:
+            stats_df = sub.groupby("template")["expression"].agg(["mean","std"]).reset_index()
+            fig = go.Figure(go.Bar(
+                x=stats_df["template"], y=stats_df["mean"],
+                error_y=dict(type="data", array=stats_df["std"]),
+                marker_color="lightgrey"
+            ))
+            for cond in stats_df["template"]:
+                vals = sub[sub["template"] == cond]["expression"]
+                fig.add_trace(go.Scatter(x=[cond]*len(vals), y=vals, mode="markers",
+                                         marker=dict(color="black", size=6), showlegend=False))
+            fig.update_layout(title=f"Barplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
+            fig_bar = fig
+        else:
+            fig = go.Figure()
+            palette = px_colors.qualitative.Plotly
+            for i, cond in enumerate(sub["template"].unique()):
+                vals = sub[sub["template"] == cond]["expression"]
+                color = palette[i % len(palette)]
+                fig.add_trace(go.Box(y=vals, name=cond, fillcolor=color,
+                                     line_color=color, marker_color=color,
+                                     boxpoints='all', jitter=0.3, pointpos=-1.8))
+            fig.update_layout(title=f"Boxplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
+            fig_bar = fig
+
+        # Save plot to a temporary PNG file
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        img_bytes = pio.to_image(fig_bar, format="png", scale=2)
+        tmp.write(img_bytes)
+        tmp.flush()
+
+        # Embed in PDF
+        pdf.ln(2)
+        pdf.set_font("Arial", size=12)
+        pdf.cell(0, 6, f"Plot for gene {g}", ln=True)
+        pdf.image(tmp.name, w=100)
+        pdf.ln(4)
+
+        # Prepare HTML embed
+        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+        html_parts = []
+        html_parts.append(f"<h2>Plot for gene {g}</h2>")
+        html_parts.append(f'<img src="data:image/png;base64,{img_b64}" style="max-width:600px;"/>')
+
+        # Collect for full HTML
+        if "full_html_parts" not in locals():
+            full_html_parts = ['<h1>qPCR Analysis Report</h1>']
+            full_html_parts.append("<h2>QC Summary</h2><ul>"
+                                   f"<li>Total wells: {qc['total_wells']}</li>"
+                                   f"<li>Outliers: {qc['outliers']} ({qc['outlier_rate']:.1f}%)</li>"
+                                   "</ul>")
+            full_html_parts.append("<h2>Expression Results</h2>")
+            full_html_parts.append(merged_t.to_html(index=False, classes='table table-striped'))
+        full_html_parts.extend(html_parts)
+
+    # Finalize PDF
     pdf_bytes = pdf.output(dest='S').encode('latin-1')
-    buf = io.BytesIO(pdf_bytes)
-    buf.seek(0)
-
-    # PDF download button
+    buf_pdf = io.BytesIO(pdf_bytes)
+    buf_pdf.seek(0)
     st.sidebar.download_button(
         "Download report (PDF)",
-        data=buf,
+        data=buf_pdf,
         file_name="qpcr_full_report.pdf",
         mime="application/pdf"
     )
 
-    # Also offer HTML export
-    # build HTML report
-    html_parts = ['<h1>qPCR Analysis Report</h1>']
-    if qc:
-        html_parts.append(f"<h2>QC Summary</h2><ul>"
-                          f"<li>Total wells: {qc['total_wells']}</li>"
-                          f"<li>Outliers: {qc['outliers']} ({qc['outlier_rate']:.1f}%)]</li>"
-                          f"</ul>")
-    html_parts.append("<h2>Expression Results</h2>")
-    html_parts.append(merged_t.to_html(index=False, classes='table table-striped'))
-    full_html = "<html><head><title>qPCR Report</title></head><body>" + "".join(html_parts) + "</body></html>"
+    # Finalize HTML report
+    full_html = "<html><head><title>qPCR Report</title></head><body>" + "".join(full_html_parts) + "</body></html>"
     st.sidebar.download_button(
         "Download report (HTML)",
         data=full_html,
