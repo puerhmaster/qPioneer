@@ -35,8 +35,16 @@ def init_github():
     token = st.secrets["github"]["token"]
     return Github(token)
 
+# --- GitHub helper must be defined before use ---
 if has_github:
     gh = init_github()
+    repo = gh.get_repo(st.secrets["github"]["repo_name"])
+    def save_file_to_repo(path: str, content: bytes, commit_msg: str):
+        try:
+            existing = repo.get_contents(path)
+            repo.update_file(path, commit_msg, content, existing.sha)
+        except:
+            repo.create_file(path, commit_msg, content)
 # --- Выбор языка / Language selector ---
 lang = st.sidebar.selectbox("Language / Язык", ["English", "Русский"], index=0)
 # Переводы ключевых строк
@@ -221,9 +229,7 @@ if sess_file:
     except Exception as e:
         st.sidebar.error(f"Failed to load session: {e}")
 
-# Save session
 if st.sidebar.button("Save session"):
-    # prepare session dict
     sess = {
         "annotation": st.session_state.get("annotation", {}),
         "run": st.session_state.get("run", ""),
@@ -233,8 +239,7 @@ if st.sidebar.button("Save session"):
         "cp_col": st.session_state.get("cp_col", "Cp"),
         "plate_type": st.session_state.get("plate_type", "384-well"),
         "font_size": st.session_state.get("font_size", 8),
-        # merged_t may be DataFrame; convert to records
-        "merged_t": st.session_state.get("merged_t", pd.DataFrame()).to_dict(orient="records"),
+        "merged_t": st.session_state.get("merged_t", pd.DataFrame()).to_dict("records"),
         "uploaded_runs": {
             name: base64.b64encode(data).decode("ascii")
             for name, data in st.session_state.get("uploaded_runs", {}).items()
@@ -247,6 +252,11 @@ if st.sidebar.button("Save session"):
         file_name="session.json",
         mime="application/json",
     )
+    if has_github:
+        user = gh.get_user().login
+        filename = f"{user}/session_{st.session_state.get('run','session')}.json"
+        save_file_to_repo(filename, sess_json, f"Save session for {user}")
+        st.sidebar.success("Сессия сохранена в облако (GitHub)")
 
 st.title(texts["title"])
 
@@ -277,7 +287,6 @@ if annot_file:
 if "annotation" not in st.session_state:
     st.session_state.annotation = {}
 
-# Кнопка для экспорта текущей разметки
 if st.sidebar.button(texts["save_markup_button"]):
     annot_json = json.dumps(st.session_state.annotation, ensure_ascii=False).encode("utf-8")
     st.sidebar.download_button(
@@ -286,6 +295,11 @@ if st.sidebar.button(texts["save_markup_button"]):
         file_name="annotation.json",
         mime="application/json",
     )
+    if has_github:
+        user = gh.get_user().login
+        filename = f"{user}/annotation_{st.session_state.get('run','session')}.json"
+        save_file_to_repo(filename, annot_json, f"Save annotation for {user}")
+        st.sidebar.success("Разметка сохранена в облако (GitHub)")
 
 
 # --- File Format & Columns ---
@@ -798,15 +812,7 @@ import plotly.io as pio
 st.sidebar.markdown("## 📑 Full Report")
 
 # Helper to save files to GitHub repository under a per-user folder
-if has_github:
-    # directly fetch the repo by full name to avoid get_user issues
-    repo = gh.get_repo(st.secrets["github"]["repo_name"])
-    def save_file_to_repo(path: str, content: str, commit_msg: str):
-        try:
-            existing = repo.get_contents(path)
-            repo.update_file(path, commit_msg, content, existing.sha)
-        except:
-            repo.create_file(path, commit_msg, content)
+# (already defined above if has_github)
 
 if st.sidebar.button("Generate Full Report"):
     # Create PDF with FPDF
