@@ -21,7 +21,7 @@ lang = st.sidebar.selectbox("Language / Язык", ["English", "Русский"]
 # Переводы ключевых строк
 translations = {
     "Русский": {
-        "title": "🧪 qPCR-анализ для 384-well plate",
+        "title": "🧪 qPioneer qPCR app",
         "markup_header": "💾 Разметка",
         "upload_markup": "Загрузить разметку (JSON)",
         "markup_loaded": "Разметка загружена",
@@ -91,7 +91,7 @@ translations = {
         "help_plot_type": "Выберите тип графика: boxplot или barplot с ошибками.",
     },
     "English": {
-        "title": "🧪 qPCR Analysis for 384-well Plate",
+        "title": "🧪 qPioneer qPCR app",
         "markup_header": "💾 Annotation",
         "upload_markup": "Load annotation (JSON)",
         "markup_loaded": "Annotation loaded",
@@ -802,65 +802,74 @@ if st.sidebar.button("Generate Full Report"):
         pdf.cell(0, 6, line, ln=True)
     pdf.ln(4)
 
-    # Generate and embed plots
+    # Generate and embed both boxplot and barplot for each gene
     for g in merged_t["gene"].unique():
         sub = merged_t[merged_t["gene"] == g]
-        # boxplot or barplot based on last selected type
-        fig_bar = None
-        if st.session_state.get("plot_type") == texts["barplot_header"]:
-            stats_df = sub.groupby("template")["expression"].agg(["mean","std"]).reset_index()
-            fig = go.Figure(go.Bar(
-                x=stats_df["template"], y=stats_df["mean"],
-                error_y=dict(type="data", array=stats_df["std"]),
-                marker_color="lightgrey"
+        # --- Generate Boxplot ---
+        palette = px_colors.qualitative.Plotly
+        fig_box = go.Figure()
+        for i, cond in enumerate(sub["template"].unique()):
+            vals = sub[sub["template"] == cond]["expression"]
+            color = palette[i % len(palette)]
+            fig_box.add_trace(go.Box(
+                y=vals, name=cond, fillcolor=color,
+                line_color=color, marker_color=color,
+                boxpoints='all', jitter=0.3, pointpos=-1.8
             ))
-            for cond in stats_df["template"]:
-                vals = sub[sub["template"] == cond]["expression"]
-                fig.add_trace(go.Scatter(x=[cond]*len(vals), y=vals, mode="markers",
-                                         marker=dict(color="black", size=6), showlegend=False))
-            fig.update_layout(title=f"Barplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
-            fig_bar = fig
-        else:
-            fig = go.Figure()
-            palette = px_colors.qualitative.Plotly
-            for i, cond in enumerate(sub["template"].unique()):
-                vals = sub[sub["template"] == cond]["expression"]
-                color = palette[i % len(palette)]
-                fig.add_trace(go.Box(y=vals, name=cond, fillcolor=color,
-                                     line_color=color, marker_color=color,
-                                     boxpoints='all', jitter=0.3, pointpos=-1.8))
-            fig.update_layout(title=f"Boxplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
-            fig_bar = fig
+        fig_box.update_layout(title=f"Boxplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
+        # --- Generate Barplot ---
+        stats_df = sub.groupby("template")["expression"].agg(["mean","std"]).reset_index()
+        fig_bar = go.Figure(go.Bar(
+            x=stats_df["template"], y=stats_df["mean"],
+            error_y=dict(type="data", array=stats_df["std"]),
+            marker_color="lightgrey"
+        ))
+        for cond in stats_df["template"]:
+            vals = sub[sub["template"] == cond]["expression"]
+            fig_bar.add_trace(go.Scatter(
+                x=[cond]*len(vals), y=vals, mode="markers",
+                marker=dict(color="black", size=6), showlegend=False
+            ))
+        fig_bar.update_layout(title=f"Barplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
 
-        # Save plot to a temporary PNG file
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-        img_bytes = pio.to_image(fig_bar, format="png", scale=2)
-        tmp.write(img_bytes)
-        tmp.flush()
+        # Save boxplot to a temporary PNG file
+        tmp_box = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        img_box_bytes = pio.to_image(fig_box, format="png", scale=2)
+        tmp_box.write(img_box_bytes)
+        tmp_box.flush()
+        # Save barplot to a temporary PNG file
+        tmp_bar = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        img_bar_bytes = pio.to_image(fig_bar, format="png", scale=2)
+        tmp_bar.write(img_bar_bytes)
+        tmp_bar.flush()
 
-        # Embed in PDF
+        # Embed both images in PDF: boxplot then barplot
         pdf.ln(2)
         pdf.set_font("Arial", size=12)
-        pdf.cell(0, 6, f"Plot for gene {g}", ln=True)
-        pdf.image(tmp.name, w=100)
+        pdf.cell(0, 6, f"Boxplot for gene {g}", ln=True)
+        pdf.image(tmp_box.name, w=100)
+        pdf.ln(2)
+        pdf.cell(0, 6, f"Barplot for gene {g}", ln=True)
+        pdf.image(tmp_bar.name, w=100)
         pdf.ln(4)
 
-        # Prepare HTML embed
-        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-        html_parts = []
-        html_parts.append(f"<h2>Plot for gene {g}</h2>")
-        html_parts.append(f'<img src="data:image/png;base64,{img_b64}" style="max-width:600px;"/>')
-
-        # Collect for full HTML
+        # Prepare HTML embed for both plots
         if "full_html_parts" not in locals():
             full_html_parts = ['<h1>qPCR Analysis Report</h1>']
             full_html_parts.append("<h2>QC Summary</h2><ul>"
-                                   f"<li>Total wells: {qc['total_wells']}</li>"
-                                   f"<li>Outliers: {qc['outliers']} ({qc['outlier_rate']:.1f}%)</li>"
+                                   f"<li>Total wells: {qc.get('total_wells',0)}</li>"
+                                   f"<li>Outliers: {qc.get('outliers',0)} ({qc.get('outlier_rate',0):.1f}%)</li>"
                                    "</ul>")
             full_html_parts.append("<h2>Expression Results</h2>")
             full_html_parts.append(merged_t.to_html(index=False, classes='table table-striped'))
-        full_html_parts.extend(html_parts)
+        # Boxplot HTML
+        img_box_b64 = base64.b64encode(img_box_bytes).decode("utf-8")
+        full_html_parts.append(f"<h2>Boxplot for gene {g}</h2>")
+        full_html_parts.append(f'<img src="data:image/png;base64,{img_box_b64}" style="max-width:600px;"/>')
+        # Barplot HTML
+        img_bar_b64 = base64.b64encode(img_bar_bytes).decode("utf-8")
+        full_html_parts.append(f"<h2>Barplot for gene {g}</h2>")
+        full_html_parts.append(f'<img src="data:image/png;base64,{img_bar_b64}" style="max-width:600px;"/>')
 
     # Finalize PDF
     pdf_bytes = pdf.output(dest='S').encode('latin-1')
