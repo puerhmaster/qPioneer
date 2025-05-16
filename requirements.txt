@@ -25,7 +25,7 @@ kiwisolver==1.4.8
 MarkupSafe==3.0.2
 matplotlib==3.10.3
 narwhals==1.39.0
-numpy==1.24.3
+numpy>=1.26.0,<2.0.0  
 openpyxl==3.1.5
 packaging==24.2
 pandas==2.2.3
