@@ -797,9 +797,9 @@ if st.sidebar.button("Generate Full Report"):
         line = "  ".join(str(row[c])[:10].ljust(10) for c in cols)
         pdf.cell(0, 6, line, ln=True)
 
-    # Save PDF to buffer
-    buf = io.BytesIO()
-    pdf.output(buf)
+    # Save PDF to buffer properly using output(dest='S')
+    pdf_bytes = pdf.output(dest='S').encode('latin-1')
+    buf = io.BytesIO(pdf_bytes)
     buf.seek(0)
 
     # PDF download button
