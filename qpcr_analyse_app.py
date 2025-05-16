@@ -229,6 +229,7 @@ if sess_file:
     except Exception as e:
         st.sidebar.error(f"Failed to load session: {e}")
 
+
 if st.sidebar.button("Save session"):
     sess = {
         "annotation": st.session_state.get("annotation", {}),
@@ -257,6 +258,37 @@ if st.sidebar.button("Save session"):
         filename = f"{user}/session_{st.session_state.get('run','session')}.json"
         save_file_to_repo(filename, sess_json, f"Save session for {user}")
         st.sidebar.success("Сессия сохранена в облако (GitHub)")
+
+# --- Load session from GitHub ---
+if has_github:
+    st.sidebar.markdown("### Загрузить сессию из облака (GitHub)")
+    try:
+        user = gh.get_user().login
+        # List files in the user's folder
+        contents = repo.get_contents(f"{user}")
+        session_files = [file.path for file in contents if file.path.startswith(f"{user}/session_") and file.path.endswith(".json")]
+        if session_files:
+            choice = st.sidebar.selectbox("Выберите файл сессии", session_files)
+            if st.sidebar.button("Загрузить сессию из GitHub"):
+                file_content = repo.get_contents(choice)
+                data = json.loads(base64.b64decode(file_content.content).decode("utf-8"))
+                # restore as above
+                for key in ("annotation", "run", "delimiter", "plate_type", "font_size", "merged_t"):
+                    if key in data:
+                        if key == "merged_t":
+                            st.session_state["merged_t"] = pd.DataFrame(data["merged_t"])
+                        else:
+                            st.session_state[key] = data[key]
+                if "uploaded_runs" in data:
+                    st.session_state["uploaded_runs"] = {
+                        name: base64.b64decode(bdata.encode("ascii"))
+                        for name, bdata in data["uploaded_runs"].items()
+                    }
+                st.sidebar.success(f"Сессия {choice.split('/')[-1]} загружена из GitHub")
+        else:
+            st.sidebar.info("В облаке нет сохранённых сессий")
+    except Exception as e:
+        st.sidebar.error(f"Не удалось загрузить список сессий: {e}")
 
 st.title(texts["title"])
 
@@ -300,6 +332,28 @@ if st.sidebar.button(texts["save_markup_button"]):
         filename = f"{user}/annotation_{st.session_state.get('run','session')}.json"
         save_file_to_repo(filename, annot_json, f"Save annotation for {user}")
         st.sidebar.success("Разметка сохранена в облако (GitHub)")
+
+# --- Load annotation from GitHub ---
+if has_github:
+    st.sidebar.markdown("### Загрузить разметку из облака (GitHub)")
+    try:
+        user = gh.get_user().login
+        contents = repo.get_contents(f"{user}")
+        annot_files = [
+            file.path for file in contents
+            if file.path.startswith(f"{user}/annotation_") and file.path.endswith(".json")
+        ]
+        if annot_files:
+            choice_annot = st.sidebar.selectbox("Выберите файл разметки", annot_files)
+            if st.sidebar.button("Загрузить разметку из GitHub"):
+                file_content = repo.get_contents(choice_annot)
+                annot_data = json.loads(base64.b64decode(file_content.content).decode("utf-8"))
+                st.session_state.annotation = annot_data
+                st.sidebar.success(f"Разметка {choice_annot.split('/')[-1]} загружена из GitHub")
+        else:
+            st.sidebar.info("В облаке нет сохранённых разметок")
+    except Exception as e:
+        st.sidebar.error(f"Не удалось загрузить список разметок: {e}")
 
 
 # --- File Format & Columns ---
