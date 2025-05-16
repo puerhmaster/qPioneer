@@ -15,14 +15,15 @@ from fpdf import FPDF
 import base64
 
 # --- GitHub integration for saving reports ---
+# Optional GitHub integration
 try:
     from github import Github
+    has_github = True
 except ModuleNotFoundError:
-    st.error(
-        "⚠️ Не найдена библиотека PyGithub. "
-        "Добавьте `PyGithub` в requirements.txt и перезапустите приложение."
+    has_github = False
+    st.warning(
+        "⚠️ PyGithub не установлен: функции сохранения в GitHub отключены."
     )
-    st.stop()
 
 st.set_page_config(layout="wide")
 
@@ -34,7 +35,8 @@ def init_github():
     token = st.secrets["github"]["token"]
     return Github(token)
 
-gh = init_github()
+if has_github:
+    gh = init_github()
 # --- Выбор языка / Language selector ---
 lang = st.sidebar.selectbox("Language / Язык", ["English", "Русский"], index=0)
 # Переводы ключевых строк
@@ -796,14 +798,14 @@ import plotly.io as pio
 st.sidebar.markdown("## 📑 Full Report")
 
 # Helper to save files to GitHub repository under a per-user folder
-repo = gh.get_user().get_repo(st.secrets["github"]["repo_name"])
-
-def save_file_to_repo(path: str, content: str, commit_msg: str):
-    try:
-        existing = repo.get_contents(path)
-        repo.update_file(path, commit_msg, content, existing.sha)
-    except:
-        repo.create_file(path, commit_msg, content)
+if has_github:
+    repo = gh.get_user().get_repo(st.secrets["github"]["repo_name"])
+    def save_file_to_repo(path: str, content: str, commit_msg: str):
+        try:
+            existing = repo.get_contents(path)
+            repo.update_file(path, commit_msg, content, existing.sha)
+        except:
+            repo.create_file(path, commit_msg, content)
 
 if st.sidebar.button("Generate Full Report"):
     # Create PDF with FPDF
@@ -912,12 +914,13 @@ if st.sidebar.button("Generate Full Report"):
         mime="application/pdf"
     )
     # Upload PDF report to GitHub Repo
-    save_file_to_repo(
-        f"{gh.get_user().login}/qpcr_full_report.pdf",
-        buf_pdf.getvalue().decode('latin-1'),
-        "Add full PDF report"
-    )
-    st.sidebar.success("PDF report saved to GitHub")
+    if has_github:
+        save_file_to_repo(
+            f"{gh.get_user().login}/qpcr_full_report.pdf",
+            buf_pdf.getvalue().decode('latin-1'),
+            "Add full PDF report"
+        )
+        st.sidebar.success("PDF report saved to GitHub")
 
     # Finalize HTML report
     full_html = "<html><head><title>qPCR Report</title></head><body>" + "".join(full_html_parts) + "</body></html>"
@@ -928,12 +931,13 @@ if st.sidebar.button("Generate Full Report"):
         mime="text/html"
     )
     # Upload HTML report to GitHub Repo
-    save_file_to_repo(
-        f"{gh.get_user().login}/qpcr_full_report.html",
-        full_html,
-        "Add full HTML report"
-    )
-    st.sidebar.success("HTML report saved to GitHub")
+    if has_github:
+        save_file_to_repo(
+            f"{gh.get_user().login}/qpcr_full_report.html",
+            full_html,
+            "Add full HTML report"
+        )
+        st.sidebar.success("HTML report saved to GitHub")
 
 # --- Add these entries to your Streamlit secrets.toml ---
 # [github]
