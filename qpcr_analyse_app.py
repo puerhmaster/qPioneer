@@ -14,34 +14,21 @@ from scipy import stats
 from fpdf import FPDF
 import base64
 
-from pydrive2.auth import GoogleAuth
-from pydrive2.drive import GoogleDrive
-import streamlit as st
 
-@st.cache_resource
-def init_drive():
-    # Load OAuth client config from Streamlit secrets
-    oauth_cfg = json.loads(st.secrets["gdrive_oauth"]["client_config"])
-    # Load service account credentials from Streamlit secrets
-    svc_cfg = json.loads(st.secrets["gdrive_service_account"]["service_account"])
-    # Initialize PyDrive2 auth
-    gauth = GoogleAuth()
-    # First configure OAuth client (for manual flows, if needed)
-    gauth.settings["client_config"] = oauth_cfg
-    # Now override with service account credentials
-    gauth.settings["service_config"] = svc_cfg
-    gauth.settings["service_config_backend"] = "settings"
-    # Authenticate using service account (no user interaction)
-    gauth.ServiceAuth()
-    return GoogleDrive(gauth)
+# --- GitHub integration for saving reports ---
+from github import Github
 
-drive = init_drive()
-
-# Задайте ID папки в вашем Google Drive для хранения
-FOLDER_ID = "1fs3_8TS2gCvIWg4LBWc445JAyB6xluq6"
-
-# Set Streamlit page config after all imports
 st.set_page_config(layout="wide")
+
+
+
+# --- GitHub initialization ---
+@st.cache_resource
+def init_github():
+    token = st.secrets["github"]["token"]
+    return Github(token)
+
+gh = init_github()
 # --- Выбор языка / Language selector ---
 lang = st.sidebar.selectbox("Language / Язык", ["English", "Русский"], index=0)
 # Переводы ключевых строк
@@ -801,6 +788,17 @@ import matplotlib
 import plotly.io as pio
 
 st.sidebar.markdown("## 📑 Full Report")
+
+# Helper to save files to GitHub repository under a per-user folder
+repo = gh.get_user().get_repo(st.secrets["github"]["repo_name"])
+
+def save_file_to_repo(path: str, content: str, commit_msg: str):
+    try:
+        existing = repo.get_contents(path)
+        repo.update_file(path, commit_msg, content, existing.sha)
+    except:
+        repo.create_file(path, commit_msg, content)
+
 if st.sidebar.button("Generate Full Report"):
     # Create PDF with FPDF
     pdf = FPDF(orientation="P", unit="mm", format="A4")
@@ -907,15 +905,13 @@ if st.sidebar.button("Generate Full Report"):
         file_name="qpcr_full_report.pdf",
         mime="application/pdf"
     )
-    # Upload PDF report to Google Drive
-    pdf_drive_file = drive.CreateFile({
-        "title": "qpcr_full_report.pdf",
-        "parents": [{"id": FOLDER_ID}],
-        "mimeType": "application/pdf"
-    })
-    pdf_drive_file.ContentBinary = buf_pdf.getvalue()
-    pdf_drive_file.Upload()
-    st.sidebar.success("PDF report uploaded to Google Drive")
+    # Upload PDF report to GitHub Repo
+    save_file_to_repo(
+        f"{gh.get_user().login}/qpcr_full_report.pdf",
+        buf_pdf.getvalue().decode('latin-1'),
+        "Add full PDF report"
+    )
+    st.sidebar.success("PDF report saved to GitHub")
 
     # Finalize HTML report
     full_html = "<html><head><title>qPCR Report</title></head><body>" + "".join(full_html_parts) + "</body></html>"
@@ -925,12 +921,15 @@ if st.sidebar.button("Generate Full Report"):
         file_name="qpcr_full_report.html",
         mime="text/html"
     )
-    # Upload HTML report to Google Drive
-    html_drive_file = drive.CreateFile({
-        "title": "qpcr_full_report.html",
-        "parents": [{"id": FOLDER_ID}],
-        "mimeType": "text/html"
-    })
-    html_drive_file.SetContentString(full_html)
-    html_drive_file.Upload()
-    st.sidebar.success("HTML report uploaded to Google Drive")
+    # Upload HTML report to GitHub Repo
+    save_file_to_repo(
+        f"{gh.get_user().login}/qpcr_full_report.html",
+        full_html,
+        "Add full HTML report"
+    )
+    st.sidebar.success("HTML report saved to GitHub")
+
+# --- Add these entries to your Streamlit secrets.toml ---
+# [github]
+# token = "ghp_YOUR_PERSONAL_ACCESS_TOKEN"
+# repo_name = "puerhmaster/qPioneer-user-data"
