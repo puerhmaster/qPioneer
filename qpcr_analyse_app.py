@@ -12,12 +12,6 @@ from io import BytesIO
 from scipy import stats
 # --- Additional imports for report generation ---
 from fpdf import FPDF
-try:
-    from weasyprint import HTML
-    HAS_WEASYPRINT = True
-except ImportError:
-    HTML = None
-    HAS_WEASYPRINT = False
 import base64
 
 # Set Streamlit page config after all imports
@@ -777,77 +771,56 @@ if "merged_t" in st.session_state:
 # -------------------- Full Report Generation --------------------
 st.sidebar.markdown("## 📑 Full Report")
 if st.sidebar.button("Generate Full Report"):
+    # Create PDF with FPDF
+    pdf = FPDF(orientation="P", unit="mm", format="A4")
+    pdf.add_page()
+    pdf.set_font("Arial", size=14)
+    pdf.cell(0, 10, "qPCR Analysis Report", ln=True)
+
+    # QC summary
+    pdf.set_font("Arial", size=12)
+    qc = st.session_state.get("qc_summary", {})
+    pdf.cell(0, 8, f"Total wells: {qc.get('total_wells', 0)}", ln=True)
+    pdf.cell(0, 8, f"Outliers: {qc.get('outliers', 0)} ({qc.get('outlier_rate', 0):.1f}%)", ln=True)
+    pdf.ln(4)
+
+    # Expression table
+    merged_t = st.session_state.get("merged_t", pd.DataFrame())
+    pdf.set_font("Courier", size=10)
+    cols = merged_t.columns.tolist()
+    header = "  ".join(c[:10].ljust(10) for c in cols)
+    pdf.cell(0, 6, header, ln=True)
+    for _, row in merged_t.iterrows():
+        line = "  ".join(str(row[c])[:10].ljust(10) for c in cols)
+        pdf.cell(0, 6, line, ln=True)
+
+    # Save PDF to buffer
+    buf = io.BytesIO()
+    pdf.output(buf)
+    buf.seek(0)
+
+    # PDF download button
+    st.sidebar.download_button(
+        "Download report (PDF)",
+        data=buf,
+        file_name="qpcr_full_report.pdf",
+        mime="application/pdf"
+    )
+
+    # Also offer HTML export
     # build HTML report
     html_parts = ['<h1>qPCR Analysis Report</h1>']
-    # add QC summary
-    qc = st.session_state.get("qc_summary", {})
     if qc:
         html_parts.append(f"<h2>QC Summary</h2><ul>"
                           f"<li>Total wells: {qc['total_wells']}</li>"
                           f"<li>Outliers: {qc['outliers']} ({qc['outlier_rate']:.1f}%)]</li>"
                           f"</ul>")
-    # add expression table
     html_parts.append("<h2>Expression Results</h2>")
-    merged_t = st.session_state.get("merged_t", pd.DataFrame())
     html_parts.append(merged_t.to_html(index=False, classes='table table-striped'))
-    # add each plot as HTML
-    for g in merged_t['gene'].unique():
-        # boxplot
-        sub = merged_t[merged_t["gene"] == g]
-        palette = px_colors.qualitative.Plotly
-        fig_b = go.Figure()
-        for i, cond in enumerate(sub["template"].unique()):
-            vals = sub[sub["template"] == cond]["expression"]
-            color = palette[i % len(palette)]
-            fig_b.add_trace(go.Box(
-                y=vals, name=cond,
-                fillcolor=color, line_color=color, marker_color=color,
-                boxpoints='all', jitter=0.3, pointpos=-1.8
-            ))
-        fig_b.update_layout(title=f"Boxplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
-        html_parts.append(f"<h3>Boxplot {g}</h3>")
-        # embed static PNG image as base64
-        img_png = pio.to_image(fig_b, format="png")
-        img_b64 = base64.b64encode(img_png).decode('ascii')
-        html_parts.append(f'<img src="data:image/png;base64,{img_b64}" style="width:100%;max-width:600px;"/>')
-        # barplot
-        stats_df = sub.groupby("template")["expression"].agg(["mean","std"]).reset_index()
-        fig_bar = go.Figure(go.Bar(
-            x=stats_df["template"],
-            y=stats_df["mean"],
-            error_y=dict(type="data", array=stats_df["std"]),
-            marker_color="lightgrey"
-        ))
-        for i, cond in enumerate(stats_df["template"]):
-            y_vals = merged_t[(merged_t["gene"]==g) & (merged_t["template"]==cond)]["expression"]
-            fig_bar.add_trace(go.Scatter(
-                x=[cond]*len(y_vals),
-                y=y_vals,
-                mode='markers',
-                marker=dict(color='black', size=6),
-                showlegend=False
-            ))
-        fig_bar.update_layout(title=f"Barplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
-        html_parts.append(f"<h3>Barplot {g}</h3>")
-        img_png_bar = pio.to_image(fig_bar, format="png")
-        img_b64_bar = base64.b64encode(img_png_bar).decode('ascii')
-        html_parts.append(f'<img src="data:image/png;base64,{img_b64_bar}" style="width:100%;max-width:600px;"/>')
     full_html = "<html><head><title>qPCR Report</title></head><body>" + "".join(html_parts) + "</body></html>"
-    # offer HTML download
     st.sidebar.download_button(
         "Download report (HTML)",
         data=full_html,
         file_name="qpcr_full_report.html",
         mime="text/html"
     )
-    # convert HTML to a PDF with embedded static images
-    if HAS_WEASYPRINT:
-        pdf_bytes = HTML(string=full_html).write_pdf()
-        st.sidebar.download_button(
-            "Download report (PDF)",
-            data=pdf_bytes,
-            file_name="qpcr_full_report.pdf",
-            mime="application/pdf"
-        )
-    else:
-        st.sidebar.warning("PDF export requires WeasyPrint. Install it with `pip install weasyprint`.")
