@@ -20,12 +20,18 @@ import streamlit as st
 
 @st.cache_resource
 def init_drive():
+    # Load OAuth client config from Streamlit secrets
+    oauth_cfg = json.loads(st.secrets["gdrive_oauth"]["client_config"])
     # Load service account credentials from Streamlit secrets
-    cfg = json.loads(st.secrets["gdrive_oauth"]["client_config"])
+    svc_cfg = json.loads(st.secrets["gdrive_service_account"]["service_account"])
+    # Initialize PyDrive2 auth
     gauth = GoogleAuth()
-    gauth.settings["client_config"] = cfg
-    # gauth.settings["service_config"] = svc_cfg  # No longer used
-    # gauth.settings["service_config_backend"] = "settings"  # No longer used
+    # First configure OAuth client (for manual flows, if needed)
+    gauth.settings["client_config"] = oauth_cfg
+    # Now override with service account credentials
+    gauth.settings["service_config"] = svc_cfg
+    gauth.settings["service_config_backend"] = "settings"
+    # Authenticate using service account (no user interaction)
     gauth.ServiceAuth()
     return GoogleDrive(gauth)
 
