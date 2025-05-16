@@ -799,7 +799,8 @@ st.sidebar.markdown("## 📑 Full Report")
 
 # Helper to save files to GitHub repository under a per-user folder
 if has_github:
-    repo = gh.get_user().get_repo(st.secrets["github"]["repo_name"])
+    # directly fetch the repo by full name to avoid get_user issues
+    repo = gh.get_repo(st.secrets["github"]["repo_name"])
     def save_file_to_repo(path: str, content: str, commit_msg: str):
         try:
             existing = repo.get_contents(path)
