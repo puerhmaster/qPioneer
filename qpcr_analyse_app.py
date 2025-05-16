@@ -786,6 +786,9 @@ if st.sidebar.button("Generate Full Report"):
 
     # Expression table
     merged_t = st.session_state.get("merged_t", pd.DataFrame())
+    # Ensure PDF-only column names are Latin-1 safe
+    if "ΔCt" in merged_t.columns:
+        merged_t = merged_t.rename(columns={"ΔCt": "dCt"})
     pdf.set_font("Courier", size=10)
     cols = merged_t.columns.tolist()
     header = "  ".join(c[:10].ljust(10) for c in cols)
