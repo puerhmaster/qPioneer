@@ -15,6 +15,7 @@ COPY .streamlit/config.toml .streamlit/config.toml
 COPY qpcr_analyse_app.py ./
 COPY examples ./examples
 COPY fonts ./fonts
+COPY assets ./assets
 
 USER app
 EXPOSE 8501

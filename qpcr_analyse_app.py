@@ -26,7 +26,11 @@ except ModuleNotFoundError:
         "⚠️ PyGithub не установлен: функции сохранения в GitHub отключены."
     )
 
-st.set_page_config(layout="wide")
+ASSETS_DIR = Path(__file__).parent / "assets"
+st.set_page_config(layout="wide", page_icon=str(ASSETS_DIR / "favicon.svg"))
+# Kachkin brand: logo in the sidebar header (32px, links to kachkin.pro) and the "a Kachkin tool" credit
+st.logo(str(ASSETS_DIR / "kachkin-horizontal-en-ink.svg"), size="large", link="https://kachkin.pro")
+st.sidebar.markdown("[a Kachkin tool](https://kachkin.pro)")
 
 
 # --- Public mode: cloud saving only when keys are present in Streamlit secrets ---

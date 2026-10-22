@@ -14,3 +14,11 @@ gatherUsageStats = false
 [client]
 # без меню разработчика и кнопки Deploy
 toolbarMode = "viewer"
+
+[theme]
+base = "light"
+primaryColor = "#8C6CF2"
+backgroundColor = "#F1ECE3"
+secondaryBackgroundColor = "#E7E0D3"
+textColor = "#15131B"
+font = "sans serif"
