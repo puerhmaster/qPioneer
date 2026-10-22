@@ -61,85 +61,131 @@ if has_github:
             repo.update_file(path, commit_msg, content, existing.sha)
         except:
             repo.create_file(path, commit_msg, content)
-# --- Выбор языка / Language selector ---
-lang = st.sidebar.selectbox("Language / Язык", ["English", "Русский"], index=0)
-# Переводы ключевых строк
+# --- Выбор языка / Language selector (русский по умолчанию) ---
+lang = st.sidebar.selectbox("Language / Язык", ["Русский", "English"], index=0)
+# Переводы интерфейса и отчётов. Значения в данных (роли, тип планшета) остаются английскими —
+# так старые сессии и разметки читаются на любом языке; здесь только их подписи.
 translations = {
     "Русский": {
-        "title": "🧪 qPioneer qPCR app",
+        "title": "🧪 qPioneer: анализ qPCR",
         "markup_header": "💾 Разметка",
         "upload_markup": "Загрузить разметку (JSON)",
         "markup_loaded": "Разметка загружена",
-        "markup_load_error": "Ошибка загрузки разметки",
+        "markup_load_error": "Не удалось загрузить разметку",
         "save_markup_button": "💾 Сохранить разметку",
         "restore_session_button": "Восстановить сессию",
-        "download_markup_json": "Скачать разметку JSON",
-        "load_header": "📥 Загрузка данных qPCR",
-        "load_prompt": "Выберите qPCR-файл",
-        "load_info":   "⬆️ Загрузите файл для начала.",
-        "load_error_cols": "Файл должен содержать колонки 'Pos' и 'Cp'",
-        "load_success": "⬆️ Успешно загружено {n} лунок.",
+        "download_markup_json": "Скачать разметку (JSON)",
+        "load_header": "📥 Данные qPCR",
+        "load_prompt": "Выберите файл с данными qPCR",
+        "load_info": "⬆️ Загрузите файл или нажмите «🧪 Загрузить пример».",
+        "load_error_cols": "В файле должны быть колонки 'Pos' и 'Cp'",
+        "load_success": "⬆️ Загружено лунок: {n}.",
         "settings_header": "⚙️ Настройки",
-        "run_id_label": "Run ID",
-        "plate_type_label": "Тип планшетки",
-        "font_size_label": "Размер шрифта в heatmap",
+        "run_id_label": "ID запуска (Run ID)",
+        "plate_type_label": "Тип планшета",
+        "font_size_label": "Размер шрифта на схеме планшета",
         "tab1": "1️⃣ Гены",
-        "tab2": "2️⃣ Шаблон и репликаты",
-        "step1_header": "🧩 Шаг 1: Назначение генов",
+        "tab2": "2️⃣ Условия и повторы",
+        "step1_header": "🧩 Шаг 1: гены",
         "role_label": "Роль",
         "gene_label": "Ген",
-        "select_region_genes": "Выбрать область (гены)",
-        "add_region_genes": "➕ Добавить область (гены)",
-        "step2_header": "🧩 Шаг 2: Назначение шаблона и репликатов",
-        "template_label": "Шаблон (condition)",
-        "replicate_label": "Номер репликата",
-        "select_region_reps": "Выбрать область (репликаты)",
-        "add_region_reps": "➕ Добавить область (репликаты)",
-        "status": "🔍 Статус разметки планшетки",
+        "select_region_genes": "Область лунок для гена",
+        "add_region_genes": "➕ Назначить ген области",
+        "step2_header": "🧩 Шаг 2: условия и повторы",
+        "template_label": "Условие (образец)",
+        "replicate_label": "Номер повтора",
+        "select_region_reps": "Область лунок для условия",
+        "add_region_reps": "➕ Назначить условие и повтор",
+        "status": "🔍 Разметка планшета",
         "calc_expression": "📊 Рассчитать экспрессию",
-        "results_header": "📋 Результаты экспрессии",
+        "results_header": "📋 Результаты: экспрессия",
         "download_csv": "📥 Скачать CSV",
-        "download_json": "📥 Скачать JSON результатов",
+        "download_json": "📥 Скачать JSON",
         "download_excel": "📥 Скачать Excel",
-        "boxplot_header": "📊 Boxplots экспрессии по условиям и генам",
-        "download_boxplot": "📥 Скачать {g}.png",
-        "kaleido_warning": "Установите kaleido (`pip install kaleido`) для скачивания.",
-        "select_region_from": "От (верхний левый)",
-        "select_region_to": "До (нижний правый)",
+        "boxplot_header": "📊 Диаграммы размаха по условиям и генам",
+        "download_boxplot": "📥 Скачать boxplot_{g}.png",
+        "barplot_header": "📊 Столбчатые диаграммы (среднее ± SD)",
+        "download_barplot": "📥 Скачать barplot_{g}.png",
+        "boxplot_title": "{g}: диаграмма размаха",
+        "barplot_title": "{g}: среднее ± SD",
+        "expression_axis": "экспрессия (2^−ΔCt)",
+        "kaleido_warning": "Для скачивания PNG установите kaleido (`pip install kaleido`).",
+        "select_region_from": "От (левый верхний угол)",
+        "select_region_to": "До (правый нижний угол)",
         "file_format_header": "Формат файла и колонки",
-        "delimiter_label": "Разделитель / Delimiter",
-        "skiprows_label": "Пропустить строк / Skip header rows",
-        "pos_col_label": "Колонка позиции / Well‑position column",
-        "cp_col_label": "Колонка Ct‑значения / Ct value column",
-        "load_error_cols_map": "Колонки '{pos}' и '{cp}' должны быть в файле",
+        "delimiter_label": "Разделитель",
+        "delim_names": {"\t": "Табуляция", ",": "Запятая", ";": "Точка с запятой", " ": "Пробел"},
+        "skiprows_label": "Пропустить строк в начале",
+        "pos_col_label": "Колонка с позицией лунки",
+        "cp_col_label": "Колонка со значениями Ct",
+        "load_error_cols_map": "В файле нет колонок '{pos}' и '{cp}'. Проверьте названия колонок и число пропускаемых строк слева.",
+        "select_run": "Файл (запуск)",
+        "plate_names": {"384-well": "384 лунки", "96-well": "96 лунок"},
+        "role_names": {"reference gene": "референсный ген", "target gene": "целевой ген", "negative control": "отрицательный контроль"},
+        "genes_assigned": "Ген «{gene}» назначен лункам: {cnt}.",
+        "reps_assigned": "Условие «{template}», повтор {replicate} назначены лункам: {cnt}.",
+        "rep_short": "повт.",
         "plot_type_label": "Тип графика",
-        "barplot_header": "📊 Барплот с ошибками",
         "outlier_threshold_label": "Порог выбросов (σ)",
-        "qc_summary_header": "📈 QC‑отчет",
-        "qc_total_wells": "Всего лунок",
+        "qc_summary_header": "📈 Контроль качества",
+        "qc_total_wells": "Лунок в анализе",
         "qc_outliers": "Выбросы",
-        "tab_help": "Начало работы",
+        "qc_pass_rate": "Прошли контроль",
+        "tab_help": "Как начать",
         "help_getting_started": """
 **Как начать работу**
 
-1. Загрузите файл qPCR (txt/csv/xlsx).
-2. Настройте формат: разделитель, заголовки, колонки.
-3. На вкладках “Гены” и “Шаблон и репликаты” разметьте лунки.
-4. Задайте порог выбросов и нажмите “📊 Рассчитать экспрессию”.
-5. Просмотрите QC-отчет и графики, скачайте результаты.
+1. Загрузите файл qPCR (TXT/CSV/XLSX) или нажмите «🧪 Загрузить пример».
+2. При необходимости настройте формат: разделитель, строки заголовка, колонки.
+3. Разметьте лунки на вкладках «Гены» и «Условия и повторы».
+4. Задайте порог выбросов и нажмите «📊 Рассчитать экспрессию».
+5. Посмотрите контроль качества и графики, скачайте результаты и отчёт.
+
+Сессию можно сохранить файлом и продолжить позже.
 """,
-        "help_delimiter": "Выберите разделитель, используемый в файле.",
-        "help_skiprows": "Количество строк заголовка для пропуска.",
-        "help_pos_col": "Имя колонки с позицией лунки (например, A1).",
-        "help_cp_col": "Имя колонки с Ct-значениями.",
-        "help_calc_expression": "Нажмите, чтобы рассчитать выражение (ΔCt).",
-        "help_plot_type": "Выберите тип графика: boxplot или barplot с ошибками.",
+        "help_delimiter": "Разделитель колонок в TXT-файле (CSV всегда читается через запятую).",
+        "help_skiprows": "Сколько строк перед заголовком таблицы пропустить.",
+        "help_pos_col": "Название колонки с позицией лунки (например, A1).",
+        "help_cp_col": "Название колонки со значениями Ct (Cp).",
+        "help_calc_expression": "Нормализация по референсному гену (ΔCt) и расчёт экспрессии 2^−ΔCt.",
+        "help_plot_type": "Диаграмма размаха или столбчатая диаграмма со средним и стандартным отклонением.",
         "cloud_off": "☁️ Облачное сохранение отключено. Сохраните сессию файлом — так данные остаются у вас.",
         "load_example": "🧪 Загрузить пример",
         "help_load_example": "Синтетический планшет на 96 лунок: ACTB (референс), SOX2 и PAX6, условия Control и Treated, по 3 повтора. Разметка уже сделана — нажмите «Рассчитать экспрессию».",
         "example_loaded": "Загружен пример (синтетические данные) с готовой разметкой.",
         "clear_data": "🗑 Очистить и загрузить другой файл",
         "report_needs_results": "Сначала нажмите «📊 Рассчитать экспрессию».",
+        "session_header": "🔄 Сессия",
+        "load_session": "Загрузить сессию (JSON)",
+        "session_restored": "Сессия восстановлена",
+        "session_load_error": "Не удалось загрузить сессию: {e}",
+        "save_session": "💾 Сохранить сессию",
+        "download_session": "Скачать сессию (JSON)",
+        "cloud_session_saved": "Сессия сохранена в облако (GitHub)",
+        "cloud_sessions_header": "Загрузить сессию из облака (GitHub)",
+        "cloud_choose_session": "Файл сессии",
+        "cloud_load_session": "Загрузить сессию из GitHub",
+        "cloud_session_loaded": "Сессия {name} загружена из GitHub",
+        "cloud_no_sessions": "В облаке нет сохранённых сессий",
+        "cloud_sessions_error": "Не удалось загрузить список сессий: {e}",
+        "cloud_markup_saved": "Разметка сохранена в облако (GitHub)",
+        "cloud_markups_header": "Загрузить разметку из облака (GitHub)",
+        "cloud_choose_markup": "Файл разметки",
+        "cloud_load_markup": "Загрузить разметку из GitHub",
+        "cloud_markup_loaded": "Разметка {name} загружена из GitHub",
+        "cloud_no_markups": "В облаке нет сохранённых разметок",
+        "cloud_markups_error": "Не удалось загрузить список разметок: {e}",
+        "report_header": "📑 Отчёт",
+        "generate_report": "📑 Сформировать отчёт",
+        "download_report_pdf": "Скачать отчёт (PDF)",
+        "download_report_html": "Скачать отчёт (HTML)",
+        "cloud_pdf_saved": "PDF-отчёт сохранён в GitHub",
+        "cloud_html_saved": "HTML-отчёт сохранён в GitHub",
+        "report_title": "Отчёт по анализу qPCR",
+        "report_qc": "Контроль качества",
+        "report_results": "Экспрессия",
+        "report_boxplot": "Диаграмма размаха: {g}",
+        "report_barplot": "Среднее ± SD: {g}",
     },
     "English": {
         "title": "🧪 qPioneer qPCR app",
@@ -152,9 +198,9 @@ translations = {
         "download_markup_json": "Download annotation JSON",
         "load_header": "📥 Upload qPCR Data",
         "load_prompt": "Select the qPCR data file",
-        "load_info":   "⬆️ Please upload a file to begin.",
+        "load_info": "⬆️ Upload a file or click “🧪 Load example”.",
         "load_error_cols": "File must contain 'Pos' and 'Cp' columns",
-        "load_success":"⬆️ Successfully loaded {n} wells.",
+        "load_success": "⬆️ Successfully loaded {n} wells.",
         "settings_header": "⚙️ Settings",
         "run_id_label": "Run ID",
         "plate_type_label": "Plate type",
@@ -179,40 +225,50 @@ translations = {
         "download_excel": "📥 Download Excel",
         "boxplot_header": "📊 Expression boxplots by Condition & Gene",
         "download_boxplot": "📥 Download {g}.png",
+        "barplot_header": "📊 Barplot with error bars",
+        "download_barplot": "📥 Download barplot_{g}.png",
+        "boxplot_title": "Boxplot {g}",
+        "barplot_title": "Barplot {g}",
+        "expression_axis": "expression (2^−ΔCt)",
         "kaleido_warning": "Install kaleido (`pip install kaleido`) to enable downloads.",
         "select_region_from": "From (top left)",
         "select_region_to": "To (bottom right)",
         "file_format_header": "File Format & Columns",
-        "delimiter_label": "Delimiter / Разделитель",
-        "skiprows_label": "Skip header rows / Пропустить строк",
-        "pos_col_label": "Well‑position column / Колонка позиции",
-        "cp_col_label": "Ct value column / Колонка Ct‑значения",
+        "delimiter_label": "Delimiter",
+        "delim_names": {"\t": "Tab", ",": "Comma", ";": "Semicolon", " ": "Space"},
+        "skiprows_label": "Header rows to skip",
+        "pos_col_label": "Well position column",
+        "cp_col_label": "Ct value column",
         "load_error_cols_map": "Columns '{pos}' and '{cp}' must exist in file",
-        "load_prompt": "Select the qPCR data file",
-        "load_info":   "⬆️ Please upload a file to begin.",
-        "load_success":"⬆️ Successfully loaded {n} wells.",
-        "load_error_cols_map": "Columns '{pos}' and '{cp}' must exist in file",
+        "select_run": "Select Run",
+        "plate_names": {"384-well": "384-well", "96-well": "96-well"},
+        "role_names": {"reference gene": "reference gene", "target gene": "target gene", "negative control": "negative control"},
+        "genes_assigned": "{cnt} wells assigned to gene “{gene}”.",
+        "reps_assigned": "{cnt} wells assigned to condition “{template}”, replicate #{replicate}.",
+        "rep_short": "rep",
         "plot_type_label": "Plot type",
-        "barplot_header": "📊 Barplot with error bars",
         "outlier_threshold_label": "Outlier threshold (σ)",
         "qc_summary_header": "📈 QC Summary",
         "qc_total_wells": "Total wells",
         "qc_outliers": "Outliers",
+        "qc_pass_rate": "Pass rate",
         "tab_help": "Getting Started",
         "help_getting_started": """
 **Quickstart Guide**
 
-1. Upload your qPCR data file (txt/csv/xlsx).
+1. Upload your qPCR data file (txt/csv/xlsx) or click “🧪 Load example”.
 2. Configure file format: delimiter, header rows, column names.
 3. Annotate wells in “Genes” and “Condition & Replicates” tabs.
 4. Set outlier threshold and click “📊 Calculate expression”.
-5. Review QC summary and plots, download your results.
+5. Review QC summary and plots, download your results and report.
+
+You can save the session to a file and continue later.
 """,
-        "help_delimiter": "Select the delimiter used in your file.",
+        "help_delimiter": "Column delimiter in TXT files (CSV is always read as comma-separated).",
         "help_skiprows": "Number of header rows to skip when reading the file.",
         "help_pos_col": "Column name with well positions (e.g., A1).",
         "help_cp_col": "Column name with Ct values.",
-        "help_calc_expression": "Click to normalize and compute expression (ΔCt).",
+        "help_calc_expression": "Normalize to the reference gene (ΔCt) and compute expression 2^−ΔCt.",
         "help_plot_type": "Choose chart type: boxplot or barplot with error bars.",
         "cloud_off": "☁️ Cloud saving is off. Save your session to a file — your data stays with you.",
         "load_example": "🧪 Load example",
@@ -220,6 +276,37 @@ translations = {
         "example_loaded": "Example loaded (synthetic data) with ready annotation.",
         "clear_data": "🗑 Clear and upload another file",
         "report_needs_results": "Click “📊 Calculate expression” first.",
+        "session_header": "🔄 Session",
+        "load_session": "Load session (JSON)",
+        "session_restored": "Session restored",
+        "session_load_error": "Failed to load session: {e}",
+        "save_session": "💾 Save session",
+        "download_session": "Download session (JSON)",
+        "cloud_session_saved": "Session saved to the cloud (GitHub)",
+        "cloud_sessions_header": "Load session from the cloud (GitHub)",
+        "cloud_choose_session": "Session file",
+        "cloud_load_session": "Load session from GitHub",
+        "cloud_session_loaded": "Session {name} loaded from GitHub",
+        "cloud_no_sessions": "No saved sessions in the cloud",
+        "cloud_sessions_error": "Could not list sessions: {e}",
+        "cloud_markup_saved": "Annotation saved to the cloud (GitHub)",
+        "cloud_markups_header": "Load annotation from the cloud (GitHub)",
+        "cloud_choose_markup": "Annotation file",
+        "cloud_load_markup": "Load annotation from GitHub",
+        "cloud_markup_loaded": "Annotation {name} loaded from GitHub",
+        "cloud_no_markups": "No saved annotations in the cloud",
+        "cloud_markups_error": "Could not list annotations: {e}",
+        "report_header": "📑 Full Report",
+        "generate_report": "📑 Generate Full Report",
+        "download_report_pdf": "Download report (PDF)",
+        "download_report_html": "Download report (HTML)",
+        "cloud_pdf_saved": "PDF report saved to GitHub",
+        "cloud_html_saved": "HTML report saved to GitHub",
+        "report_title": "qPCR Analysis Report",
+        "report_qc": "QC Summary",
+        "report_results": "Expression Results",
+        "report_boxplot": "Boxplot for gene {g}",
+        "report_barplot": "Barplot for gene {g}",
     }
 }
 texts = translations[lang]
@@ -229,12 +316,12 @@ with st.sidebar.expander(texts["tab_help"], expanded=True):
     st.markdown(texts["help_getting_started"])
 
 # --- Save / Load entire session state ---
-st.sidebar.markdown("## 🔄 Session")
+st.sidebar.markdown(f"## {texts['session_header']}")
 if not has_github:
     st.sidebar.caption(texts["cloud_off"])
 # Load session
 upload_gen = st.session_state.get("upload_gen", 0)
-sess_file = st.sidebar.file_uploader("Load session (JSON)", type=["json"], key=f"session_upload_{upload_gen}")
+sess_file = st.sidebar.file_uploader(texts["load_session"], type=["json"], key=f"session_upload_{upload_gen}")
 if sess_file:
     try:
         sess = json.loads(sess_file.read().decode("utf-8"))
@@ -253,15 +340,15 @@ if sess_file:
                 name: base64.b64decode(data.encode("ascii"))
                 for name, data in sess["uploaded_runs"].items()
             }
-        st.sidebar.success("Session restored")
+        st.sidebar.success(texts["session_restored"])
         # Removed broken restore session rerun logic
         # if st.sidebar.button(texts["restore_session_button"]):
         #     raise RerunException({})
     except Exception as e:
-        st.sidebar.error(f"Failed to load session: {e}")
+        st.sidebar.error(texts["session_load_error"].format(e=e))
 
 
-if st.sidebar.button("Save session"):
+if st.sidebar.button(texts["save_session"]):
     sess = {
         "annotation": st.session_state.get("annotation", {}),
         "run": st.session_state.get("run", ""),
@@ -279,7 +366,7 @@ if st.sidebar.button("Save session"):
     }
     sess_json = json.dumps(sess, ensure_ascii=False).encode("utf-8")
     st.sidebar.download_button(
-        "Download session (JSON)",
+        texts["download_session"],
         data=sess_json,
         file_name="session.json",
         mime="application/json",
@@ -289,19 +376,19 @@ if st.sidebar.button("Save session"):
         user = gh.get_user().login
         filename = f"{user}/session_{st.session_state.get('run','session')}.json"
         save_file_to_repo(filename, sess_json, f"Save session for {user}")
-        st.sidebar.success("Сессия сохранена в облако (GitHub)")
+        st.sidebar.success(texts["cloud_session_saved"])
 
 # --- Load session from GitHub ---
 if has_github:
-    st.sidebar.markdown("### Загрузить сессию из облака (GitHub)")
+    st.sidebar.markdown(f"### {texts['cloud_sessions_header']}")
     try:
         user = gh.get_user().login
         # List files in the user's folder
         contents = repo.get_contents(f"{user}")
         session_files = [file.path for file in contents if file.path.startswith(f"{user}/session_") and file.path.endswith(".json")]
         if session_files:
-            choice = st.sidebar.selectbox("Выберите файл сессии", session_files)
-            if st.sidebar.button("Загрузить сессию из GitHub"):
+            choice = st.sidebar.selectbox(texts["cloud_choose_session"], session_files)
+            if st.sidebar.button(texts["cloud_load_session"]):
                 file_content = repo.get_contents(choice)
                 data = json.loads(base64.b64decode(file_content.content).decode("utf-8"))
                 # restore as above
@@ -316,11 +403,11 @@ if has_github:
                         name: base64.b64decode(bdata.encode("ascii"))
                         for name, bdata in data["uploaded_runs"].items()
                     }
-                st.sidebar.success(f"Сессия {choice.split('/')[-1]} загружена из GitHub")
+                st.sidebar.success(texts["cloud_session_loaded"].format(name=choice.split('/')[-1]))
         else:
-            st.sidebar.info("В облаке нет сохранённых сессий")
+            st.sidebar.info(texts["cloud_no_sessions"])
     except Exception as e:
-        st.sidebar.error(f"Не удалось загрузить список сессий: {e}")
+        st.sidebar.error(texts["cloud_sessions_error"].format(e=e))
 
 st.title(texts["title"])
 
@@ -364,11 +451,11 @@ if st.sidebar.button(texts["save_markup_button"]):
         user = gh.get_user().login
         filename = f"{user}/annotation_{st.session_state.get('run','session')}.json"
         save_file_to_repo(filename, annot_json, f"Save annotation for {user}")
-        st.sidebar.success("Разметка сохранена в облако (GitHub)")
+        st.sidebar.success(texts["cloud_markup_saved"])
 
 # --- Load annotation from GitHub ---
 if has_github:
-    st.sidebar.markdown("### Загрузить разметку из облака (GitHub)")
+    st.sidebar.markdown(f"### {texts['cloud_markups_header']}")
     try:
         user = gh.get_user().login
         contents = repo.get_contents(f"{user}")
@@ -377,16 +464,16 @@ if has_github:
             if file.path.startswith(f"{user}/annotation_") and file.path.endswith(".json")
         ]
         if annot_files:
-            choice_annot = st.sidebar.selectbox("Выберите файл разметки", annot_files)
-            if st.sidebar.button("Загрузить разметку из GitHub"):
+            choice_annot = st.sidebar.selectbox(texts["cloud_choose_markup"], annot_files)
+            if st.sidebar.button(texts["cloud_load_markup"]):
                 file_content = repo.get_contents(choice_annot)
                 annot_data = json.loads(base64.b64decode(file_content.content).decode("utf-8"))
                 st.session_state.annotation = annot_data
-                st.sidebar.success(f"Разметка {choice_annot.split('/')[-1]} загружена из GitHub")
+                st.sidebar.success(texts["cloud_markup_loaded"].format(name=choice_annot.split('/')[-1]))
         else:
-            st.sidebar.info("В облаке нет сохранённых разметок")
+            st.sidebar.info(texts["cloud_no_markups"])
     except Exception as e:
-        st.sidebar.error(f"Не удалось загрузить список разметок: {e}")
+        st.sidebar.error(texts["cloud_markups_error"].format(e=e))
 
 
 # --- File Format & Columns ---
@@ -394,7 +481,7 @@ st.sidebar.header(texts["file_format_header"])
 delimiter = st.sidebar.selectbox(
     texts["delimiter_label"],
     options=["\t", ",", ";", " "],
-    format_func=lambda x: {"\t":"Tab", ",":"Comma", ";":"Semicolon", " ":"Space"}[x],
+    format_func=lambda x: texts["delim_names"][x],
     index=0,
     help=texts["help_delimiter"]
 )
@@ -427,7 +514,7 @@ st.header(texts["load_header"])
 if "uploaded_runs" in st.session_state and st.session_state["uploaded_runs"]:
     run_names = list(st.session_state["uploaded_runs"].keys())
     # allow selection among restored runs
-    selected_run = st.sidebar.selectbox("Select Run", run_names, index=0, key="run_select")
+    selected_run = st.sidebar.selectbox(texts["select_run"], run_names, index=0, key="run_select")
 else:
     # first‑time upload
     if st.button(texts["load_example"], help=texts["help_load_example"]):
@@ -449,7 +536,7 @@ else:
         st.info(texts["load_info"])
         st.stop()
     run_names = list(st.session_state["uploaded_runs"].keys())
-    selected_run = st.sidebar.selectbox("Select Run", run_names, index=0, key="run_select")
+    selected_run = st.sidebar.selectbox(texts["select_run"], run_names, index=0, key="run_select")
 
 if DEMO_RUN in run_names:
     st.info(texts["example_loaded"])
@@ -503,7 +590,8 @@ wells = [f"{r}{c}" for r in rows for c in cols]
 st.sidebar.markdown(f"## {texts['settings_header']}")
 st.sidebar.text_input(texts["run_id_label"], key="run", value="Run1")
 # -------------------- Тип планшетки --------------------
-plate_type = st.sidebar.selectbox(texts["plate_type_label"], ("384-well", "96-well"), index=0, key="plate_type")
+plate_type = st.sidebar.selectbox(texts["plate_type_label"], ("384-well", "96-well"), index=0, key="plate_type",
+                                  format_func=lambda x: texts["plate_names"][x])
 
 if plate_type == "384-well":
     rows = list("ABCDEFGHIJKLMNOP")
@@ -523,7 +611,8 @@ tab1, tab2 = st.tabs([texts["tab1"], texts["tab2"]])
 with tab1:
     st.header(texts["step1_header"])
     gene = st.text_input(texts["gene_label"], value="ACTB")
-    role = st.selectbox(texts["role_label"], ["reference gene", "target gene", "negative control"])
+    role = st.selectbox(texts["role_label"], ["reference gene", "target gene", "negative control"],
+                        format_func=lambda r: texts["role_names"][r])
     st.subheader(texts["select_region_genes"])
     c1, c2 = st.columns(2)
     start1 = c1.selectbox(texts["select_region_from"], wells, key="g_start")
@@ -541,7 +630,7 @@ with tab1:
                 ent.update({"gene": gene, "role": role})
                 st.session_state.annotation[w] = ent
                 cnt += 1
-        st.success(f"Привязано {cnt} лунок к гену «{gene}».")
+        st.success(texts["genes_assigned"].format(cnt=cnt, gene=gene))
 
 # -------------------- Вкладка 2: Шаблон и репликаты --------------------
 with tab2:
@@ -569,7 +658,7 @@ with tab2:
                 })
                 st.session_state.annotation[w] = ent
                 cnt += 1
-        st.success(f"Привязано {cnt} лунок к шаблону «{template}», репликат #{replicate}.")
+        st.success(texts["reps_assigned"].format(cnt=cnt, template=template, replicate=replicate))
 
 # -------------------- Итоговая heatmap --------------------
 st.markdown("---")
@@ -599,7 +688,7 @@ for r in rows:
             text.append(
                 f"{ent.get('gene','')}<br>"
                 f"{ent.get('template','')}<br>"
-                f"rep: {ent.get('replicate','')}"
+                f"{texts['rep_short']}: {ent.get('replicate','')}"
 )
         else:
             z.append(0)
@@ -778,8 +867,8 @@ if "merged_t" in st.session_state:
     if qc:
         st.subheader(texts["qc_summary_header"])
         st.write(f"{texts['qc_total_wells']}: {qc['total_wells']}")
-        st.write(f"{texts['qc_outliers']}: {qc['outliers']} ({qc['pass_rate']:.1f}%)")
-        st.write(f"Outlier rate: {qc['outlier_rate']:.1f}%")
+        st.write(f"{texts['qc_outliers']}: {qc['outliers']} ({qc['outlier_rate']:.1f}%)")
+        st.write(f"{texts['qc_pass_rate']}: {qc['pass_rate']:.1f}%")
 
     # 📊 Generate chart based on selection
     if plot_type == texts["boxplot_header"]:
@@ -798,7 +887,7 @@ if "merged_t" in st.session_state:
                         fillcolor=color, line_color=color, marker_color=color,
                         boxpoints='all', jitter=0.3, pointpos=-1.8
                     ))
-                fig_b.update_layout(title=f"Boxplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
+                fig_b.update_layout(title=texts["boxplot_title"].format(g=g), yaxis_title=texts["expression_axis"], margin=dict(t=30,b=20))
                 # Annotate pairwise significance for boxplot
                 max_expr = sub["expression"].max()
                 y_start = max_expr * 1.05
@@ -891,12 +980,12 @@ if "merged_t" in st.session_state:
                         xref="x", yref="y"
                     )
                     y_start += h * 3
-                fig_bar.update_layout(title=f"Barplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
+                fig_bar.update_layout(title=texts["barplot_title"].format(g=g), yaxis_title=texts["expression_axis"], margin=dict(t=30,b=20))
                 st.plotly_chart(fig_bar, use_container_width=True)
                 try:
                     img = pio.to_image(fig_bar, format="png")
                     st.download_button(
-                        f"📥 Скачать barplot_{g}.png",
+                        texts["download_barplot"].format(g=g),
                         data=img,
                         file_name=f"barplot_{g}.png",
                         mime="image/png"
@@ -910,12 +999,12 @@ import matplotlib
 # Ensure plotly can write images
 import plotly.io as pio
 
-st.sidebar.markdown("## 📑 Full Report")
+st.sidebar.markdown(f"## {texts['report_header']}")
 
 # Helper to save files to GitHub repository under a per-user folder
 # (already defined above if has_github)
 
-if st.sidebar.button("Generate Full Report"):
+if st.sidebar.button(texts["generate_report"]):
     if st.session_state.get("merged_t", pd.DataFrame()).empty:
         st.sidebar.warning(texts["report_needs_results"])
         st.stop()
@@ -929,13 +1018,13 @@ if st.sidebar.button("Generate Full Report"):
         pdf.cell(0, height, text, new_x="LMARGIN", new_y="NEXT")
 
     pdf.set_font("DejaVu", size=14)
-    pdf_line(10, "qPCR Analysis Report")
+    pdf_line(10, texts["report_title"])
 
     # QC summary
     pdf.set_font("DejaVu", size=12)
     qc = st.session_state.get("qc_summary", {})
-    pdf_line(8, f"Total wells: {qc.get('total_wells', 0)}")
-    pdf_line(8, f"Outliers: {qc.get('outliers', 0)} ({qc.get('outlier_rate', 0):.1f}%)")
+    pdf_line(8, f"{texts['qc_total_wells']}: {qc.get('total_wells', 0)}")
+    pdf_line(8, f"{texts['qc_outliers']}: {qc.get('outliers', 0)} ({qc.get('outlier_rate', 0):.1f}%)")
     pdf.ln(4)
 
     # Expression table
@@ -963,7 +1052,7 @@ if st.sidebar.button("Generate Full Report"):
                 line_color=color, marker_color=color,
                 boxpoints='all', jitter=0.3, pointpos=-1.8
             ))
-        fig_box.update_layout(title=f"Boxplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
+        fig_box.update_layout(title=texts["boxplot_title"].format(g=g), yaxis_title=texts["expression_axis"], margin=dict(t=30,b=20))
         # --- Generate Barplot ---
         stats_df = sub.groupby("template")["expression"].agg(["mean","std"]).reset_index()
         fig_bar = go.Figure(go.Bar(
@@ -977,7 +1066,7 @@ if st.sidebar.button("Generate Full Report"):
                 x=[cond]*len(vals), y=vals, mode="markers",
                 marker=dict(color="black", size=6), showlegend=False
             ))
-        fig_bar.update_layout(title=f"Barplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
+        fig_bar.update_layout(title=texts["barplot_title"].format(g=g), yaxis_title=texts["expression_axis"], margin=dict(t=30,b=20))
 
         # Render both plots in memory: user plots are never written to disk
         img_box_bytes = pio.to_image(fig_box, format="png", scale=2)
@@ -986,35 +1075,35 @@ if st.sidebar.button("Generate Full Report"):
         # Embed both images in PDF: boxplot then barplot
         pdf.ln(2)
         pdf.set_font("DejaVu", size=12)
-        pdf_line(6, f"Boxplot for gene {g}")
+        pdf_line(6, texts["report_boxplot"].format(g=g))
         pdf.image(io.BytesIO(img_box_bytes), w=100)
         pdf.ln(2)
-        pdf_line(6, f"Barplot for gene {g}")
+        pdf_line(6, texts["report_barplot"].format(g=g))
         pdf.image(io.BytesIO(img_bar_bytes), w=100)
         pdf.ln(4)
 
         # Prepare HTML embed for both plots
         if "full_html_parts" not in locals():
-            full_html_parts = ['<h1>qPCR Analysis Report</h1>']
-            full_html_parts.append("<h2>QC Summary</h2><ul>"
-                                   f"<li>Total wells: {qc.get('total_wells',0)}</li>"
-                                   f"<li>Outliers: {qc.get('outliers',0)} ({qc.get('outlier_rate',0):.1f}%)</li>"
+            full_html_parts = [f"<h1>{texts['report_title']}</h1>"]
+            full_html_parts.append(f"<h2>{texts['report_qc']}</h2><ul>"
+                                   f"<li>{texts['qc_total_wells']}: {qc.get('total_wells',0)}</li>"
+                                   f"<li>{texts['qc_outliers']}: {qc.get('outliers',0)} ({qc.get('outlier_rate',0):.1f}%)</li>"
                                    "</ul>")
-            full_html_parts.append("<h2>Expression Results</h2>")
+            full_html_parts.append(f"<h2>{texts['report_results']}</h2>")
             full_html_parts.append(merged_t.to_html(index=False, classes='table table-striped'))
         # Boxplot HTML
         img_box_b64 = base64.b64encode(img_box_bytes).decode("utf-8")
-        full_html_parts.append(f"<h2>Boxplot for gene {g}</h2>")
+        full_html_parts.append(f"<h2>{texts['report_boxplot'].format(g=g)}</h2>")
         full_html_parts.append(f'<img src="data:image/png;base64,{img_box_b64}" style="max-width:600px;"/>')
         # Barplot HTML
         img_bar_b64 = base64.b64encode(img_bar_bytes).decode("utf-8")
-        full_html_parts.append(f"<h2>Barplot for gene {g}</h2>")
+        full_html_parts.append(f"<h2>{texts['report_barplot'].format(g=g)}</h2>")
         full_html_parts.append(f'<img src="data:image/png;base64,{img_bar_b64}" style="max-width:600px;"/>')
 
     # Finalize PDF
     pdf_bytes = bytes(pdf.output())
     st.sidebar.download_button(
-        "Download report (PDF)",
+        texts["download_report_pdf"],
         data=pdf_bytes,
         file_name="qpcr_full_report.pdf",
         mime="application/pdf",
@@ -1027,14 +1116,15 @@ if st.sidebar.button("Generate Full Report"):
             pdf_bytes,
             "Add full PDF report"
         )
-        st.sidebar.success("PDF report saved to GitHub")
+        st.sidebar.success(texts["cloud_pdf_saved"])
 
     # Finalize HTML report
     # charset: without it a saved report shows Cyrillic and ΔCt as mojibake
-    full_html = ('<!doctype html><html><head><meta charset="utf-8"><title>qPCR Report</title></head><body>'
+    html_lang = "ru" if lang == "Русский" else "en"
+    full_html = (f'<!doctype html><html lang="{html_lang}"><head><meta charset="utf-8"><title>{texts["report_title"]}</title></head><body>'
                  + "".join(full_html_parts) + "</body></html>")
     st.sidebar.download_button(
-        "Download report (HTML)",
+        texts["download_report_html"],
         data=full_html,
         file_name="qpcr_full_report.html",
         mime="text/html",
@@ -1047,7 +1137,7 @@ if st.sidebar.button("Generate Full Report"):
             full_html,
             "Add full HTML report"
         )
-        st.sidebar.success("HTML report saved to GitHub")
+        st.sidebar.success(texts["cloud_html_saved"])
 
 # --- Add these entries to your Streamlit secrets.toml ---
 # [github]
