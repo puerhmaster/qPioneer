@@ -23,7 +23,7 @@ try:
 except ModuleNotFoundError:
     has_github = False
     st.warning(
-        "⚠️ PyGithub не установлен: функции сохранения в GitHub отключены."
+        "PyGithub не установлен: функции сохранения в GitHub отключены."
     )
 
 ASSETS_DIR = Path(__file__).parent / "assets"
@@ -71,45 +71,45 @@ lang = st.sidebar.selectbox("Language / Язык", ["Русский", "English"]
 # так старые сессии и разметки читаются на любом языке; здесь только их подписи.
 translations = {
     "Русский": {
-        "title": "🧪 qPioneer: анализ qPCR",
-        "markup_header": "💾 Разметка",
+        "title": "qPioneer: анализ qPCR",
+        "markup_header": "Разметка",
         "upload_markup": "Загрузить разметку (JSON)",
         "markup_loaded": "Разметка загружена",
         "markup_load_error": "Не удалось загрузить разметку",
-        "save_markup_button": "💾 Сохранить разметку",
+        "save_markup_button": "Сохранить разметку",
         "restore_session_button": "Восстановить сессию",
         "download_markup_json": "Скачать разметку (JSON)",
-        "load_header": "📥 Данные qPCR",
+        "load_header": "Данные qPCR",
         "load_prompt": "Выберите файл с данными qPCR",
-        "load_info": "⬆️ Загрузите файл или нажмите «🧪 Загрузить пример».",
+        "load_info": "Загрузите файл или нажмите «Загрузить пример».",
         "load_error_cols": "В файле должны быть колонки 'Pos' и 'Cp'",
-        "load_success": "⬆️ Загружено лунок: {n}.",
-        "settings_header": "⚙️ Настройки",
+        "load_success": "Загружено лунок: {n}.",
+        "settings_header": "Настройки",
         "run_id_label": "ID запуска (Run ID)",
         "plate_type_label": "Тип планшета",
         "font_size_label": "Размер шрифта на схеме планшета",
-        "tab1": "1️⃣ Гены",
-        "tab2": "2️⃣ Условия и повторы",
-        "step1_header": "🧩 Шаг 1: гены",
+        "tab1": "1. Гены",
+        "tab2": "2. Условия и повторы",
+        "step1_header": "Шаг 1: гены",
         "role_label": "Роль",
         "gene_label": "Ген",
         "select_region_genes": "Область лунок для гена",
-        "add_region_genes": "➕ Назначить ген области",
-        "step2_header": "🧩 Шаг 2: условия и повторы",
+        "add_region_genes": "Назначить ген области",
+        "step2_header": "Шаг 2: условия и повторы",
         "template_label": "Условие (образец)",
         "replicate_label": "Номер повтора",
         "select_region_reps": "Область лунок для условия",
-        "add_region_reps": "➕ Назначить условие и повтор",
-        "status": "🔍 Разметка планшета",
-        "calc_expression": "📊 Рассчитать экспрессию",
-        "results_header": "📋 Результаты: экспрессия",
-        "download_csv": "📥 Скачать CSV",
-        "download_json": "📥 Скачать JSON",
-        "download_excel": "📥 Скачать Excel",
-        "boxplot_header": "📊 Диаграммы размаха по условиям и генам",
-        "download_boxplot": "📥 Скачать boxplot_{g}.png",
-        "barplot_header": "📊 Столбчатые диаграммы (среднее ± SD)",
-        "download_barplot": "📥 Скачать barplot_{g}.png",
+        "add_region_reps": "Назначить условие и повтор",
+        "status": "Разметка планшета",
+        "calc_expression": "Рассчитать экспрессию",
+        "results_header": "Результаты: экспрессия",
+        "download_csv": "Скачать CSV",
+        "download_json": "Скачать JSON",
+        "download_excel": "Скачать Excel",
+        "boxplot_header": "Диаграммы размаха по условиям и генам",
+        "download_boxplot": "Скачать boxplot_{g}.png",
+        "barplot_header": "Столбчатые диаграммы (среднее ± SD)",
+        "download_barplot": "Скачать barplot_{g}.png",
         "boxplot_title": "{g}: диаграмма размаха",
         "barplot_title": "{g}: среднее ± SD",
         "expression_axis": "экспрессия (2^−ΔCt)",
@@ -131,7 +131,7 @@ translations = {
         "rep_short": "повт.",
         "plot_type_label": "Тип графика",
         "outlier_threshold_label": "Порог выбросов (σ)",
-        "qc_summary_header": "📈 Контроль качества",
+        "qc_summary_header": "Контроль качества",
         "qc_total_wells": "Лунок в анализе",
         "qc_outliers": "Выбросы",
         "qc_pass_rate": "Прошли контроль",
@@ -139,10 +139,10 @@ translations = {
         "help_getting_started": """
 **Как начать работу**
 
-1. Загрузите файл qPCR (TXT/CSV/XLSX) или нажмите «🧪 Загрузить пример».
+1. Загрузите файл qPCR (TXT/CSV/XLSX) или нажмите «Загрузить пример».
 2. При необходимости настройте формат: разделитель, строки заголовка, колонки.
 3. Разметьте лунки на вкладках «Гены» и «Условия и повторы».
-4. Задайте порог выбросов и нажмите «📊 Рассчитать экспрессию».
+4. Задайте порог выбросов и нажмите «Рассчитать экспрессию».
 5. Посмотрите контроль качества и графики, скачайте результаты и отчёт.
 
 Сессию можно сохранить файлом и продолжить позже.
@@ -153,17 +153,17 @@ translations = {
         "help_cp_col": "Название колонки со значениями Ct (Cp).",
         "help_calc_expression": "Нормализация по референсному гену (ΔCt) и расчёт экспрессии 2^−ΔCt.",
         "help_plot_type": "Диаграмма размаха или столбчатая диаграмма со средним и стандартным отклонением.",
-        "cloud_off": "☁️ Облачное сохранение отключено. Сохраните сессию файлом — так данные остаются у вас.",
-        "load_example": "🧪 Загрузить пример",
+        "cloud_off": "Облачное сохранение отключено. Сохраните сессию файлом — так данные остаются у вас.",
+        "load_example": "Загрузить пример",
         "help_load_example": "Синтетический планшет на 96 лунок: ACTB (референс), SOX2 и PAX6, условия Control и Treated, по 3 повтора. Разметка уже сделана — нажмите «Рассчитать экспрессию».",
         "example_loaded": "Загружен пример (синтетические данные) с готовой разметкой.",
-        "clear_data": "🗑 Очистить и загрузить другой файл",
-        "report_needs_results": "Сначала нажмите «📊 Рассчитать экспрессию».",
-        "session_header": "🔄 Сессия",
+        "clear_data": "Очистить и загрузить другой файл",
+        "report_needs_results": "Сначала нажмите «Рассчитать экспрессию».",
+        "session_header": "Сессия",
         "load_session": "Загрузить сессию (JSON)",
         "session_restored": "Сессия восстановлена",
         "session_load_error": "Не удалось загрузить сессию: {e}",
-        "save_session": "💾 Сохранить сессию",
+        "save_session": "Сохранить сессию",
         "download_session": "Скачать сессию (JSON)",
         "cloud_session_saved": "Сессия сохранена в облако (GitHub)",
         "cloud_sessions_header": "Загрузить сессию из облака (GitHub)",
@@ -179,8 +179,8 @@ translations = {
         "cloud_markup_loaded": "Разметка {name} загружена из GitHub",
         "cloud_no_markups": "В облаке нет сохранённых разметок",
         "cloud_markups_error": "Не удалось загрузить список разметок: {e}",
-        "report_header": "📑 Отчёт",
-        "generate_report": "📑 Сформировать отчёт",
+        "report_header": "Отчёт",
+        "generate_report": "Сформировать отчёт",
         "download_report_pdf": "Скачать отчёт (PDF)",
         "download_report_html": "Скачать отчёт (HTML)",
         "cloud_pdf_saved": "PDF-отчёт сохранён в GitHub",
@@ -192,45 +192,45 @@ translations = {
         "report_barplot": "Среднее ± SD: {g}",
     },
     "English": {
-        "title": "🧪 qPioneer qPCR app",
-        "markup_header": "💾 Annotation",
+        "title": "qPioneer qPCR app",
+        "markup_header": "Annotation",
         "upload_markup": "Load annotation (JSON)",
         "markup_loaded": "Annotation loaded",
         "markup_load_error": "Annotation load error",
-        "save_markup_button": "💾 Save annotation",
+        "save_markup_button": "Save annotation",
         "restore_session_button": "Restore session",
         "download_markup_json": "Download annotation JSON",
-        "load_header": "📥 Upload qPCR Data",
+        "load_header": "Upload qPCR Data",
         "load_prompt": "Select the qPCR data file",
-        "load_info": "⬆️ Upload a file or click “🧪 Load example”.",
+        "load_info": "Upload a file or click “Load example”.",
         "load_error_cols": "File must contain 'Pos' and 'Cp' columns",
-        "load_success": "⬆️ Successfully loaded {n} wells.",
-        "settings_header": "⚙️ Settings",
+        "load_success": "Successfully loaded {n} wells.",
+        "settings_header": "Settings",
         "run_id_label": "Run ID",
         "plate_type_label": "Plate type",
         "font_size_label": "Font size in heatmap",
-        "tab1": "1️⃣ Genes",
-        "tab2": "2️⃣ Condition & Replicates",
-        "step1_header": "🧩 Step 1: Assign Genes",
+        "tab1": "1. Genes",
+        "tab2": "2. Condition & Replicates",
+        "step1_header": "Step 1: Assign Genes",
         "role_label": "Role",
         "gene_label": "Gene",
         "select_region_genes": "Select region (genes)",
-        "add_region_genes": "➕ Add region (genes)",
-        "step2_header": "🧩 Step 2: Assign Condition & Replicates",
+        "add_region_genes": "Add region (genes)",
+        "step2_header": "Step 2: Assign Condition & Replicates",
         "template_label": "Condition",
         "replicate_label": "Replicate number",
         "select_region_reps": "Select region (replicates)",
-        "add_region_reps": "➕ Add region (replicates)",
-        "status": "🔍 Annotation Status",
-        "calc_expression": "📊 Calculate expression",
-        "results_header": "📋 Expression Results",
-        "download_csv": "📥 Download CSV",
-        "download_json": "📥 Download JSON Results",
-        "download_excel": "📥 Download Excel",
-        "boxplot_header": "📊 Expression boxplots by Condition & Gene",
-        "download_boxplot": "📥 Download {g}.png",
-        "barplot_header": "📊 Barplot with error bars",
-        "download_barplot": "📥 Download barplot_{g}.png",
+        "add_region_reps": "Add region (replicates)",
+        "status": "Annotation Status",
+        "calc_expression": "Calculate expression",
+        "results_header": "Expression Results",
+        "download_csv": "Download CSV",
+        "download_json": "Download JSON Results",
+        "download_excel": "Download Excel",
+        "boxplot_header": "Expression boxplots by Condition & Gene",
+        "download_boxplot": "Download {g}.png",
+        "barplot_header": "Barplot with error bars",
+        "download_barplot": "Download barplot_{g}.png",
         "boxplot_title": "Boxplot {g}",
         "barplot_title": "Barplot {g}",
         "expression_axis": "expression (2^−ΔCt)",
@@ -252,7 +252,7 @@ translations = {
         "rep_short": "rep",
         "plot_type_label": "Plot type",
         "outlier_threshold_label": "Outlier threshold (σ)",
-        "qc_summary_header": "📈 QC Summary",
+        "qc_summary_header": "QC Summary",
         "qc_total_wells": "Total wells",
         "qc_outliers": "Outliers",
         "qc_pass_rate": "Pass rate",
@@ -260,10 +260,10 @@ translations = {
         "help_getting_started": """
 **Quickstart Guide**
 
-1. Upload your qPCR data file (txt/csv/xlsx) or click “🧪 Load example”.
+1. Upload your qPCR data file (txt/csv/xlsx) or click “Load example”.
 2. Configure file format: delimiter, header rows, column names.
 3. Annotate wells in “Genes” and “Condition & Replicates” tabs.
-4. Set outlier threshold and click “📊 Calculate expression”.
+4. Set outlier threshold and click “Calculate expression”.
 5. Review QC summary and plots, download your results and report.
 
 You can save the session to a file and continue later.
@@ -274,17 +274,17 @@ You can save the session to a file and continue later.
         "help_cp_col": "Column name with Ct values.",
         "help_calc_expression": "Normalize to the reference gene (ΔCt) and compute expression 2^−ΔCt.",
         "help_plot_type": "Choose chart type: boxplot or barplot with error bars.",
-        "cloud_off": "☁️ Cloud saving is off. Save your session to a file — your data stays with you.",
-        "load_example": "🧪 Load example",
+        "cloud_off": "Cloud saving is off. Save your session to a file — your data stays with you.",
+        "load_example": "Load example",
         "help_load_example": "Synthetic 96-well plate: ACTB (reference), SOX2 and PAX6, Control and Treated, 3 replicates each. Already annotated — click “Calculate expression”.",
         "example_loaded": "Example loaded (synthetic data) with ready annotation.",
-        "clear_data": "🗑 Clear and upload another file",
-        "report_needs_results": "Click “📊 Calculate expression” first.",
-        "session_header": "🔄 Session",
+        "clear_data": "Clear and upload another file",
+        "report_needs_results": "Click “Calculate expression” first.",
+        "session_header": "Session",
         "load_session": "Load session (JSON)",
         "session_restored": "Session restored",
         "session_load_error": "Failed to load session: {e}",
-        "save_session": "💾 Save session",
+        "save_session": "Save session",
         "download_session": "Download session (JSON)",
         "cloud_session_saved": "Session saved to the cloud (GitHub)",
         "cloud_sessions_header": "Load session from the cloud (GitHub)",
@@ -300,8 +300,8 @@ You can save the session to a file and continue later.
         "cloud_markup_loaded": "Annotation {name} loaded from GitHub",
         "cloud_no_markups": "No saved annotations in the cloud",
         "cloud_markups_error": "Could not list annotations: {e}",
-        "report_header": "📑 Full Report",
-        "generate_report": "📑 Generate Full Report",
+        "report_header": "Full Report",
+        "generate_report": "Generate Full Report",
         "download_report_pdf": "Download report (PDF)",
         "download_report_html": "Download report (HTML)",
         "cloud_pdf_saved": "PDF report saved to GitHub",
@@ -874,7 +874,7 @@ if "merged_t" in st.session_state:
         st.write(f"{texts['qc_outliers']}: {qc['outliers']} ({qc['outlier_rate']:.1f}%)")
         st.write(f"{texts['qc_pass_rate']}: {qc['pass_rate']:.1f}%")
 
-    # 📊 Generate chart based on selection
+    # Generate chart based on selection
     if plot_type == texts["boxplot_header"]:
         st.subheader(texts["boxplot_header"])
         palette = px_colors.qualitative.Plotly
