@@ -14,6 +14,7 @@ RUN pip install -r requirements.txt
 COPY .streamlit/config.toml .streamlit/config.toml
 COPY qpcr_analyse_app.py ./
 COPY examples ./examples
+COPY fonts ./fonts
 
 USER app
 EXPOSE 8501

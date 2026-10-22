@@ -6,7 +6,6 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.express import colors as px_colors
 import io
-import os
 import base64
 from pathlib import Path
 import openpyxl
@@ -43,6 +42,7 @@ has_github = has_github and has_secret("github")
 
 # --- Example data (synthetic, see examples/make_demo.py) ---
 EXAMPLES_DIR = Path(__file__).parent / "examples"
+FONTS_DIR = Path(__file__).parent / "fonts"
 DEMO_RUN = "demo_96well.txt"
 
 # --- GitHub initialization ---
@@ -140,7 +140,6 @@ translations = {
         "example_loaded": "Загружен пример (синтетические данные) с готовой разметкой.",
         "clear_data": "🗑 Очистить и загрузить другой файл",
         "report_needs_results": "Сначала нажмите «📊 Рассчитать экспрессию».",
-        "pdf_latin_only": "PDF-отчёт поддерживает только латиницу в названиях генов и условий. HTML-отчёт доступен ниже.",
     },
     "English": {
         "title": "🧪 qPioneer qPCR app",
@@ -221,7 +220,6 @@ translations = {
         "example_loaded": "Example loaded (synthetic data) with ready annotation.",
         "clear_data": "🗑 Clear and upload another file",
         "report_needs_results": "Click “📊 Calculate expression” first.",
-        "pdf_latin_only": "The PDF report supports Latin characters only in gene and condition names. The HTML report is available below.",
     }
 }
 texts = translations[lang]
@@ -908,7 +906,6 @@ if "merged_t" in st.session_state:
 
 
 # -------------------- Full Report Generation --------------------
-import tempfile
 import matplotlib
 # Ensure plotly can write images
 import plotly.io as pio
@@ -922,30 +919,34 @@ if st.sidebar.button("Generate Full Report"):
     if st.session_state.get("merged_t", pd.DataFrame()).empty:
         st.sidebar.warning(texts["report_needs_results"])
         st.stop()
-    # Create PDF with FPDF
+    # Create PDF with fpdf2. Embedded DejaVu fonts (fonts/) cover Cyrillic, Greek (ΔCt) and other scripts.
     pdf = FPDF(orientation="P", unit="mm", format="A4")
+    pdf.add_font("DejaVu", "", str(FONTS_DIR / "DejaVuSans.ttf"))
+    pdf.add_font("DejaVuMono", "", str(FONTS_DIR / "DejaVuSansMono.ttf"))
     pdf.add_page()
-    pdf.set_font("Arial", size=14)
-    pdf.cell(0, 10, "qPCR Analysis Report", ln=True)
+
+    def pdf_line(height, text):
+        pdf.cell(0, height, text, new_x="LMARGIN", new_y="NEXT")
+
+    pdf.set_font("DejaVu", size=14)
+    pdf_line(10, "qPCR Analysis Report")
 
     # QC summary
-    pdf.set_font("Arial", size=12)
+    pdf.set_font("DejaVu", size=12)
     qc = st.session_state.get("qc_summary", {})
-    pdf.cell(0, 8, f"Total wells: {qc.get('total_wells', 0)}", ln=True)
-    pdf.cell(0, 8, f"Outliers: {qc.get('outliers', 0)} ({qc.get('outlier_rate', 0):.1f}%)", ln=True)
+    pdf_line(8, f"Total wells: {qc.get('total_wells', 0)}")
+    pdf_line(8, f"Outliers: {qc.get('outliers', 0)} ({qc.get('outlier_rate', 0):.1f}%)")
     pdf.ln(4)
 
     # Expression table
     merged_t = st.session_state.get("merged_t", pd.DataFrame())
-    if "ΔCt" in merged_t.columns:
-        merged_t = merged_t.rename(columns={"ΔCt": "dCt"})
-    pdf.set_font("Courier", size=10)
+    pdf.set_font("DejaVuMono", size=8)
     cols = merged_t.columns.tolist()
     header = "  ".join(c[:10].ljust(10) for c in cols)
-    pdf.cell(0, 6, header, ln=True)
+    pdf_line(5, header)
     for _, row in merged_t.iterrows():
         line = "  ".join(str(row[c])[:10].ljust(10) for c in cols)
-        pdf.cell(0, 6, line, ln=True)
+        pdf_line(5, line)
     pdf.ln(4)
 
     # Generate and embed both boxplot and barplot for each gene
@@ -978,30 +979,19 @@ if st.sidebar.button("Generate Full Report"):
             ))
         fig_bar.update_layout(title=f"Barplot {g}", yaxis_title="expression", margin=dict(t=30,b=20))
 
-        # Save boxplot to a temporary PNG file
-        tmp_box = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        # Render both plots in memory: user plots are never written to disk
         img_box_bytes = pio.to_image(fig_box, format="png", scale=2)
-        tmp_box.write(img_box_bytes)
-        tmp_box.flush()
-        # Save barplot to a temporary PNG file
-        tmp_bar = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
         img_bar_bytes = pio.to_image(fig_bar, format="png", scale=2)
-        tmp_bar.write(img_bar_bytes)
-        tmp_bar.flush()
 
         # Embed both images in PDF: boxplot then barplot
         pdf.ln(2)
-        pdf.set_font("Arial", size=12)
-        pdf.cell(0, 6, f"Boxplot for gene {g}", ln=True)
-        pdf.image(tmp_box.name, w=100)
+        pdf.set_font("DejaVu", size=12)
+        pdf_line(6, f"Boxplot for gene {g}")
+        pdf.image(io.BytesIO(img_box_bytes), w=100)
         pdf.ln(2)
-        pdf.cell(0, 6, f"Barplot for gene {g}", ln=True)
-        pdf.image(tmp_bar.name, w=100)
+        pdf_line(6, f"Barplot for gene {g}")
+        pdf.image(io.BytesIO(img_bar_bytes), w=100)
         pdf.ln(4)
-        # Images are already embedded: do not keep user plots on disk
-        for tmp in (tmp_box, tmp_bar):
-            tmp.close()
-            os.unlink(tmp.name)
 
         # Prepare HTML embed for both plots
         if "full_html_parts" not in locals():
@@ -1022,33 +1012,27 @@ if st.sidebar.button("Generate Full Report"):
         full_html_parts.append(f'<img src="data:image/png;base64,{img_bar_b64}" style="max-width:600px;"/>')
 
     # Finalize PDF
-    try:
-        pdf_bytes = pdf.output(dest='S').encode('latin-1')
-    except UnicodeEncodeError:
-        # FPDF 1.7 core fonts are Latin-1 only; the HTML report below still works
-        pdf_bytes = None
-        st.sidebar.warning(texts["pdf_latin_only"])
-    if pdf_bytes is not None:
-        buf_pdf = io.BytesIO(pdf_bytes)
-        buf_pdf.seek(0)
-        st.sidebar.download_button(
-            "Download report (PDF)",
-            data=buf_pdf,
-            file_name="qpcr_full_report.pdf",
-            mime="application/pdf",
-            on_click="ignore",  # the HTML button must stay after the PDF download
-        )
+    pdf_bytes = bytes(pdf.output())
+    st.sidebar.download_button(
+        "Download report (PDF)",
+        data=pdf_bytes,
+        file_name="qpcr_full_report.pdf",
+        mime="application/pdf",
+        on_click="ignore",  # the HTML button must stay after the PDF download
+    )
     # Upload PDF report to GitHub Repo
-    if has_github and pdf_bytes is not None:
+    if has_github:
         save_file_to_repo(
             f"{gh.get_user().login}/qpcr_full_report.pdf",
-            buf_pdf.getvalue().decode('latin-1'),
+            pdf_bytes,
             "Add full PDF report"
         )
         st.sidebar.success("PDF report saved to GitHub")
 
     # Finalize HTML report
-    full_html = "<html><head><title>qPCR Report</title></head><body>" + "".join(full_html_parts) + "</body></html>"
+    # charset: without it a saved report shows Cyrillic and ΔCt as mojibake
+    full_html = ('<!doctype html><html><head><meta charset="utf-8"><title>qPCR Report</title></head><body>'
+                 + "".join(full_html_parts) + "</body></html>")
     st.sidebar.download_button(
         "Download report (HTML)",
         data=full_html,
