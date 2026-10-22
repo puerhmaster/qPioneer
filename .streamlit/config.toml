@@ -1,0 +1,16 @@
+# Публичный режим (qpioneer.kachkin.pro). Streamlit читает этот файл из рабочего каталога.
+[server]
+headless = true
+address = "0.0.0.0"
+port = 8501
+enableXsrfProtection = true
+# МБ
+maxUploadSize = 20
+fileWatcherType = "none"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# без меню разработчика и кнопки Deploy
+toolbarMode = "viewer"

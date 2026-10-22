@@ -6,7 +6,9 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.express import colors as px_colors
 import io
+import os
 import base64
+from pathlib import Path
 import openpyxl
 from io import BytesIO
 from scipy import stats
@@ -28,6 +30,20 @@ except ModuleNotFoundError:
 st.set_page_config(layout="wide")
 
 
+# --- Public mode: cloud saving only when keys are present in Streamlit secrets ---
+# Without [github] in secrets.toml the app works without login and cloud storage:
+# sessions, annotations and reports are saved as files on the user's computer.
+def has_secret(section: str) -> bool:
+    try:
+        return section in st.secrets
+    except Exception:  # no secrets.toml at all
+        return False
+
+has_github = has_github and has_secret("github")
+
+# --- Example data (synthetic, see examples/make_demo.py) ---
+EXAMPLES_DIR = Path(__file__).parent / "examples"
+DEMO_RUN = "demo_96well.txt"
 
 # --- GitHub initialization ---
 @st.cache_resource
@@ -118,6 +134,13 @@ translations = {
         "help_cp_col": "Имя колонки с Ct-значениями.",
         "help_calc_expression": "Нажмите, чтобы рассчитать выражение (ΔCt).",
         "help_plot_type": "Выберите тип графика: boxplot или barplot с ошибками.",
+        "cloud_off": "☁️ Облачное сохранение отключено. Сохраните сессию файлом — так данные остаются у вас.",
+        "load_example": "🧪 Загрузить пример",
+        "help_load_example": "Синтетический планшет на 96 лунок: ACTB (референс), SOX2 и PAX6, условия Control и Treated, по 3 повтора. Разметка уже сделана — нажмите «Рассчитать экспрессию».",
+        "example_loaded": "Загружен пример (синтетические данные) с готовой разметкой.",
+        "clear_data": "🗑 Очистить и загрузить другой файл",
+        "report_needs_results": "Сначала нажмите «📊 Рассчитать экспрессию».",
+        "pdf_latin_only": "PDF-отчёт поддерживает только латиницу в названиях генов и условий. HTML-отчёт доступен ниже.",
     },
     "English": {
         "title": "🧪 qPioneer qPCR app",
@@ -192,6 +215,13 @@ translations = {
         "help_cp_col": "Column name with Ct values.",
         "help_calc_expression": "Click to normalize and compute expression (ΔCt).",
         "help_plot_type": "Choose chart type: boxplot or barplot with error bars.",
+        "cloud_off": "☁️ Cloud saving is off. Save your session to a file — your data stays with you.",
+        "load_example": "🧪 Load example",
+        "help_load_example": "Synthetic 96-well plate: ACTB (reference), SOX2 and PAX6, Control and Treated, 3 replicates each. Already annotated — click “Calculate expression”.",
+        "example_loaded": "Example loaded (synthetic data) with ready annotation.",
+        "clear_data": "🗑 Clear and upload another file",
+        "report_needs_results": "Click “📊 Calculate expression” first.",
+        "pdf_latin_only": "The PDF report supports Latin characters only in gene and condition names. The HTML report is available below.",
     }
 }
 texts = translations[lang]
@@ -202,8 +232,11 @@ with st.sidebar.expander(texts["tab_help"], expanded=True):
 
 # --- Save / Load entire session state ---
 st.sidebar.markdown("## 🔄 Session")
+if not has_github:
+    st.sidebar.caption(texts["cloud_off"])
 # Load session
-sess_file = st.sidebar.file_uploader("Load session (JSON)", type=["json"])
+upload_gen = st.session_state.get("upload_gen", 0)
+sess_file = st.sidebar.file_uploader("Load session (JSON)", type=["json"], key=f"session_upload_{upload_gen}")
 if sess_file:
     try:
         sess = json.loads(sess_file.read().decode("utf-8"))
@@ -252,6 +285,7 @@ if st.sidebar.button("Save session"):
         data=sess_json,
         file_name="session.json",
         mime="application/json",
+        on_click="ignore",  # keep other one-off download buttons on screen
     )
     if has_github:
         user = gh.get_user().login
@@ -295,7 +329,7 @@ st.title(texts["title"])
 # --- Разметка: загрузка / сохранение ---
 st.sidebar.header(texts["markup_header"])
 # Загрузка разметки из JSON
-annot_file = st.sidebar.file_uploader(texts["upload_markup"], type=["json"])
+annot_file = st.sidebar.file_uploader(texts["upload_markup"], type=["json"], key=f"annot_upload_{upload_gen}")
 if annot_file:
     try:
         data = json.loads(annot_file.read().decode("utf-8"))
@@ -326,6 +360,7 @@ if st.sidebar.button(texts["save_markup_button"]):
         data=annot_json,
         file_name="annotation.json",
         mime="application/json",
+        on_click="ignore",
     )
     if has_github:
         user = gh.get_user().login
@@ -397,10 +432,16 @@ if "uploaded_runs" in st.session_state and st.session_state["uploaded_runs"]:
     selected_run = st.sidebar.selectbox("Select Run", run_names, index=0, key="run_select")
 else:
     # first‑time upload
+    if st.button(texts["load_example"], help=texts["help_load_example"]):
+        st.session_state["uploaded_runs"] = {DEMO_RUN: (EXAMPLES_DIR / DEMO_RUN).read_bytes()}
+        st.session_state.annotation = json.loads((EXAMPLES_DIR / "demo_96well_annotation.json").read_text(encoding="utf-8"))
+        st.session_state["plate_type"] = "96-well"
+        st.rerun()
     uploaded_files = st.file_uploader(
         texts["load_prompt"], 
-        type=["txt","csv","xls","xlsx"], 
-        accept_multiple_files=True
+        type=["txt","csv","xls","xlsx"],
+        accept_multiple_files=True,
+        key=f"data_upload_{upload_gen}"
     )
     if uploaded_files:
         for f in uploaded_files:
@@ -411,6 +452,15 @@ else:
         st.stop()
     run_names = list(st.session_state["uploaded_runs"].keys())
     selected_run = st.sidebar.selectbox("Select Run", run_names, index=0, key="run_select")
+
+if DEMO_RUN in run_names:
+    st.info(texts["example_loaded"])
+if st.button(texts["clear_data"]):
+    for key in ("uploaded_runs", "annotation", "merged_t", "pair_pvals", "qc_summary"):
+        st.session_state.pop(key, None)
+    # new widget keys empty the file uploaders, otherwise they would re-add the files
+    st.session_state["upload_gen"] = upload_gen + 1
+    st.rerun()
 
 # Load the chosen run from memory
 raw = st.session_state["uploaded_runs"][selected_run]
@@ -455,7 +505,7 @@ wells = [f"{r}{c}" for r in rows for c in cols]
 st.sidebar.markdown(f"## {texts['settings_header']}")
 st.sidebar.text_input(texts["run_id_label"], key="run", value="Run1")
 # -------------------- Тип планшетки --------------------
-plate_type = st.sidebar.selectbox(texts["plate_type_label"], ("384-well", "96-well"), index=0)
+plate_type = st.sidebar.selectbox(texts["plate_type_label"], ("384-well", "96-well"), index=0, key="plate_type")
 
 if plate_type == "384-well":
     rows = list("ABCDEFGHIJKLMNOP")
@@ -869,6 +919,9 @@ st.sidebar.markdown("## 📑 Full Report")
 # (already defined above if has_github)
 
 if st.sidebar.button("Generate Full Report"):
+    if st.session_state.get("merged_t", pd.DataFrame()).empty:
+        st.sidebar.warning(texts["report_needs_results"])
+        st.stop()
     # Create PDF with FPDF
     pdf = FPDF(orientation="P", unit="mm", format="A4")
     pdf.add_page()
@@ -945,6 +998,10 @@ if st.sidebar.button("Generate Full Report"):
         pdf.cell(0, 6, f"Barplot for gene {g}", ln=True)
         pdf.image(tmp_bar.name, w=100)
         pdf.ln(4)
+        # Images are already embedded: do not keep user plots on disk
+        for tmp in (tmp_box, tmp_bar):
+            tmp.close()
+            os.unlink(tmp.name)
 
         # Prepare HTML embed for both plots
         if "full_html_parts" not in locals():
@@ -965,17 +1022,24 @@ if st.sidebar.button("Generate Full Report"):
         full_html_parts.append(f'<img src="data:image/png;base64,{img_bar_b64}" style="max-width:600px;"/>')
 
     # Finalize PDF
-    pdf_bytes = pdf.output(dest='S').encode('latin-1')
-    buf_pdf = io.BytesIO(pdf_bytes)
-    buf_pdf.seek(0)
-    st.sidebar.download_button(
-        "Download report (PDF)",
-        data=buf_pdf,
-        file_name="qpcr_full_report.pdf",
-        mime="application/pdf"
-    )
+    try:
+        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+    except UnicodeEncodeError:
+        # FPDF 1.7 core fonts are Latin-1 only; the HTML report below still works
+        pdf_bytes = None
+        st.sidebar.warning(texts["pdf_latin_only"])
+    if pdf_bytes is not None:
+        buf_pdf = io.BytesIO(pdf_bytes)
+        buf_pdf.seek(0)
+        st.sidebar.download_button(
+            "Download report (PDF)",
+            data=buf_pdf,
+            file_name="qpcr_full_report.pdf",
+            mime="application/pdf",
+            on_click="ignore",  # the HTML button must stay after the PDF download
+        )
     # Upload PDF report to GitHub Repo
-    if has_github:
+    if has_github and pdf_bytes is not None:
         save_file_to_repo(
             f"{gh.get_user().login}/qpcr_full_report.pdf",
             buf_pdf.getvalue().decode('latin-1'),
@@ -989,7 +1053,8 @@ if st.sidebar.button("Generate Full Report"):
         "Download report (HTML)",
         data=full_html,
         file_name="qpcr_full_report.html",
-        mime="text/html"
+        mime="text/html",
+        on_click="ignore",
     )
     # Upload HTML report to GitHub Repo
     if has_github:

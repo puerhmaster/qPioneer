@@ -1,0 +1,65 @@
+Experiment: qPioneer demo (synthetic data)
+Pos	Name	Cp
+A1	ACTB Control 1	17.95
+A2	ACTB Control 1	17.96
+A3	ACTB Control 1	18.02
+A4	ACTB Control 2	17.85
+A5	ACTB Control 2	17.99
+A6	ACTB Control 2	17.95
+A7	ACTB Control 3	17.96
+A8	ACTB Control 3	17.96
+A9	ACTB Control 3	18.04
+A10	ACTB NTC	
+A11	ACTB NTC	
+A12	ACTB NTC	
+B1	ACTB Treated 1	18.17
+B2	ACTB Treated 1	18.11
+B3	ACTB Treated 1	18.08
+B4	ACTB Treated 2	18.17
+B5	ACTB Treated 2	18.06
+B6	ACTB Treated 2	18.05
+B7	ACTB Treated 3	18.02
+B8	ACTB Treated 3	18.11
+B9	ACTB Treated 3	18.17
+C1	SOX2 Control 1	26.20
+C2	SOX2 Control 1	26.25
+C3	SOX2 Control 1	26.24
+C4	SOX2 Control 2	26.11
+C5	SOX2 Control 2	26.24
+C6	SOX2 Control 2	26.07
+C7	SOX2 Control 3	25.30
+C8	SOX2 Control 3	25.27
+C9	SOX2 Control 3	25.42
+C10	SOX2 NTC	
+C11	SOX2 NTC	
+C12	SOX2 NTC	
+D1	SOX2 Treated 1	24.47
+D2	SOX2 Treated 1	24.63
+D3	SOX2 Treated 1	24.49
+D4	SOX2 Treated 2	24.35
+D5	SOX2 Treated 2	24.39
+D6	SOX2 Treated 2	24.44
+D7	SOX2 Treated 3	24.59
+D8	SOX2 Treated 3	24.61
+D9	SOX2 Treated 3	24.60
+E1	PAX6 Control 1	27.79
+E2	PAX6 Control 1	27.81
+E3	PAX6 Control 1	27.88
+E4	PAX6 Control 2	28.12
+E5	PAX6 Control 2	27.87
+E6	PAX6 Control 2	27.85
+E7	PAX6 Control 3	28.31
+E8	PAX6 Control 3	28.23
+E9	PAX6 Control 3	28.26
+E10	PAX6 NTC	
+E11	PAX6 NTC	
+E12	PAX6 NTC	
+F1	PAX6 Treated 1	28.35
+F2	PAX6 Treated 1	28.24
+F3	PAX6 Treated 1	28.31
+F4	PAX6 Treated 2	28.12
+F5	PAX6 Treated 2	28.24
+F6	PAX6 Treated 2	28.26
+F7	PAX6 Treated 3	27.98
+F8	PAX6 Treated 3	27.97
+F9	PAX6 Treated 3	28.11

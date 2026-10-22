@@ -1,0 +1,416 @@
+{
+ "A1": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Control",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "A2": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Control",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "A3": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Control",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "A4": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Control",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "A5": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Control",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "A6": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Control",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "A7": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Control",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "A8": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Control",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "A9": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Control",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "A10": {
+  "gene": "ACTB",
+  "role": "negative control"
+ },
+ "A11": {
+  "gene": "ACTB",
+  "role": "negative control"
+ },
+ "A12": {
+  "gene": "ACTB",
+  "role": "negative control"
+ },
+ "B1": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Treated",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "B2": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Treated",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "B3": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Treated",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "B4": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Treated",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "B5": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Treated",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "B6": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Treated",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "B7": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Treated",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "B8": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Treated",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "B9": {
+  "gene": "ACTB",
+  "role": "reference gene",
+  "template": "Treated",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "C1": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "C2": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "C3": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "C4": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "C5": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "C6": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "C7": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "C8": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "C9": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "C10": {
+  "gene": "SOX2",
+  "role": "negative control"
+ },
+ "C11": {
+  "gene": "SOX2",
+  "role": "negative control"
+ },
+ "C12": {
+  "gene": "SOX2",
+  "role": "negative control"
+ },
+ "D1": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "D2": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "D3": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "D4": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "D5": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "D6": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "D7": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "D8": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "D9": {
+  "gene": "SOX2",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "E1": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "E2": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "E3": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "E4": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "E5": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "E6": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "E7": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "E8": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "E9": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Control",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "E10": {
+  "gene": "PAX6",
+  "role": "negative control"
+ },
+ "E11": {
+  "gene": "PAX6",
+  "role": "negative control"
+ },
+ "E12": {
+  "gene": "PAX6",
+  "role": "negative control"
+ },
+ "F1": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "F2": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "F3": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "1",
+  "run": "Run1"
+ },
+ "F4": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "F5": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "F6": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "2",
+  "run": "Run1"
+ },
+ "F7": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "F8": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "3",
+  "run": "Run1"
+ },
+ "F9": {
+  "gene": "PAX6",
+  "role": "target gene",
+  "template": "Treated",
+  "replicate": "3",
+  "run": "Run1"
+ }
+}
